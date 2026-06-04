@@ -78,10 +78,12 @@
 <section id="overview">
 <h1>الملخص التنفيذي</h1><details class="export-actions"><summary>تصدير ملف</summary><div class="export-menu-panel"><button onclick="exportSectionPDF('overview')" type="button">PDF</button></div></details>
 <p class="lead">يعرض هذا الملخص إجمالي المؤشرات، والمؤشرات الشهرية والربعية، مع احتساب الأداء الإجمالي حسب القاعدة المعتمدة: عدد المؤشرات المحققة ÷ إجمالي مؤشرات الفترة × 100. تم إدراج لا يوجد إدخال وتحديث وزاري ضمن البطاقات، وترتيب الربع الأول بعد مارس مباشرة.</p>
-<div class="cards overview-summary-cards" style="grid-template-columns:repeat(3,minmax(0,1fr))">
-<div class="kpi-card blue"><small>إجمالي المؤشرات</small><strong>115</strong></div>
-<div class="kpi-card green"><small>المؤشرات الشهرية</small><strong>51</strong></div>
-<div class="kpi-card cyan"><small>المؤشرات الربعية</small><strong>64</strong></div>
+<div class="cards overview-summary-cards" id="summaryTopCards" style="grid-template-columns:repeat(5,minmax(0,1fr))">
+<div class="kpi-card blue"><small>إجمالي المؤشرات</small><strong id="sc-total">115</strong></div>
+<div class="kpi-card green"><small>المؤشرات الشهرية</small><strong id="sc-monthly">51</strong></div>
+<div class="kpi-card cyan"><small>المؤشرات الربعية</small><strong id="sc-quarterly">64</strong></div>
+<div class="kpi-card" style="border-color:rgba(167,139,250,.4)"><small>النصف السنوي</small><strong id="sc-half" style="color:#a78bfa">0</strong></div>
+<div class="kpi-card" style="border-color:rgba(251,146,60,.4)"><small>السنوي</small><strong id="sc-annual" style="color:#fb923c">0</strong></div>
 </div>
 <div class="executive-line-card">
 <div class="line-head"><div><h3>معدل الاداء لخطة الاعمال</h3><p>يتم الحساب وفق القاعدة: المحقق ÷ إجمالي مؤشرات الفترة × 100، بناءً على صفحة المتعثرات المحدثة من الملف المرفق.</p></div><div class="line-chip">Line Chart | Executive View</div></div>
@@ -606,71 +608,200 @@ document.addEventListener('DOMContentLoaded',()=>{
  if(/Audit|تدقيق/.test(n)) return 'audit';
  return null;
  }
- // ── Build SVG chart ──────────────────────────────────────────────
+ // ── helpers ──────────────────────────────────────────────────────
+ function cl(v){return String(v==null?'':v).trim();}
+ function toNum(v){var s=String(v||'').replace('%','').trim();var n=parseFloat(s);return isNaN(n)?0:n;}
+ function toRate(v){var r=toNum(v);if(r>0&&r<=1)r=Math.round(r*1000)/10;return r;}
+
+ // ── SVG chart builder ─────────────────────────────────────────
  function buildSVG(pts,isFore){
- var W=780,H=350,pL=60,pR=20,pT=38,pB=72,cW=W-pL-pR,cH=H-pT-pB;
+ if(!pts||!pts.length) return '';
+ var W=780,H=350,pL=66,pR=22,pT=40,pB=72,cW=W-pL-pR,cH=H-pT-pB;
  var vals=[];pts.forEach(function(p){if(p.j>0)vals.push(p.j);if(p.h>0)vals.push(p.h);});
- if(!vals.length)vals=[50,100];
- var mn=Math.max(0,Math.floor((Math.min.apply(null,vals)-8)/10)*10);
- var mx=Math.ceil((Math.max.apply(null,vals)+8)/10)*10;
+ if(!vals.length)return '';
+ var mn=Math.max(0,Math.floor((Math.min.apply(null,vals)-10)/10)*10);
+ var mx=Math.ceil((Math.max.apply(null,vals)+10)/10)*10;
  if(mx-mn<20)mx=mn+20;
  function yp(v){return pT+cH-(v-mn)/(mx-mn)*cH;}
  function xp(i){return pts.length>1?pL+i*cW/(pts.length-1):pL+cW/2;}
  var gr='';
- for(var v=mn;v<=mx;v+=10){var y=yp(v).toFixed(1);gr+='<line class="grid" x1="'+pL+'" x2="'+(W-pR)+'" y1="'+y+'" y2="'+y+'"/><text class="y-label" x="22" y="'+(parseFloat(y)+4).toFixed(1)+'">'+v+'%</text>';}
+ for(var v=mn;v<=mx;v+=10){
+ var y=yp(v).toFixed(1);
+ gr+='<line class="grid" x1="'+pL+'" x2="'+(W-pR)+'" y1="'+y+'" y2="'+y+'"/><text class="y-label" x="20" y="'+(parseFloat(y)+4).toFixed(1)+'">'+v+'%</text>';
+ }
  var jp=pts.map(function(p,i){return xp(i).toFixed(1)+','+yp(p.j).toFixed(1);}).join(' ');
  var hp=pts.map(function(p,i){return xp(i).toFixed(1)+','+yp(p.h).toFixed(1);}).join(' ');
  var ad='M'+pts.map(function(p,i){return xp(i).toFixed(1)+' '+yp(p.j).toFixed(1);}).join(' L')+' L'+xp(pts.length-1).toFixed(1)+' '+(pT+cH)+' L'+xp(0).toFixed(1)+' '+(pT+cH)+' Z';
- var pc=isFore?'cluster-poly forecast-poly':'cluster-poly',hc=isFore?'company-poly forecast-poly':'company-poly',lc=isFore?'forecast-label label':'label';
+ var pc=isFore?'cluster-poly forecast-poly':'cluster-poly';
+ var hc=isFore?'company-poly forecast-poly':'company-poly';
+ var lc=isFore?'forecast-label label':'label';
  var ds='';
  pts.forEach(function(p,i){
- var x=xp(i).toFixed(1),yj=yp(p.j).toFixed(1),yh=yp(p.h).toFixed(1);
+ var x=xp(i).toFixed(1);
+ var yj=yp(p.j).toFixed(1),yh=yp(p.h).toFixed(1);
  var jtx=x,htx=x;
- if(pts.length>6){if(i%2===0){jtx=(parseFloat(x)-12).toFixed(1);htx=jtx;}else{jtx=(parseFloat(x)+12).toFixed(1);htx=jtx;}}
- ds+='<circle class="dot-blue" cx="'+x+'" cy="'+yj+'" r="8" filter="url(#glowBlue)"/><text class="value-blue" x="'+jtx+'" y="'+(parseFloat(yj)-18).toFixed(1)+'">'+p.j+'%</text>';
- ds+='<circle class="dot-gold" cx="'+x+'" cy="'+yh+'" r="8" filter="url(#glowGold)"/><text class="value-gold" x="'+htx+'" y="'+(parseFloat(yh)+20).toFixed(1)+'">'+p.h+'%</text>';
+ if(pts.length>5){
+ var off=(i%2===0)?-14:14;
+ jtx=(parseFloat(x)+off).toFixed(1);
+ htx=(parseFloat(x)+off).toFixed(1);
+ }
+ var jty=(parseFloat(yj)-18).toFixed(1);
+ var hty=(parseFloat(yh)+20).toFixed(1);
+ // avoid value-blue overlapping value-gold when close
+ if(Math.abs(parseFloat(yj)-parseFloat(yh))<22){
+ jty=(parseFloat(yj)-22).toFixed(1);
+ hty=(parseFloat(yh)+24).toFixed(1);
+ }
+ ds+='<circle class="dot-blue" cx="'+x+'" cy="'+yj+'" r="8" filter="url(#glowBlue)"/>';
+ ds+='<text class="value-blue" x="'+jtx+'" y="'+jty+'">'+p.j+'%</text>';
+ ds+='<circle class="dot-gold" cx="'+x+'" cy="'+yh+'" r="8" filter="url(#glowGold)"/>';
+ ds+='<text class="value-gold" x="'+htx+'" y="'+hty+'">'+p.h+'%</text>';
  ds+='<text class="'+lc+'" x="'+x+'" y="315">'+p.n+'</text>';
  });
- return '<svg class="lux-chart" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" role="img"><defs><filter id="glowBlue" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur result="blur" stdDeviation="4"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="glowGold" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur result="blur" stdDeviation="4"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="blueArea" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#60a5fa" stop-opacity=".20"/><stop offset="1" stop-color="#60a5fa" stop-opacity="0"/></linearGradient></defs>'+gr+'<line class="axis" x1="'+pL+'" x2="'+(W-pR)+'" y1="'+(pT+cH)+'" y2="'+(pT+cH)+'"/><line class="axis" x1="'+pL+'" x2="'+pL+'" y1="'+pT+'" y2="'+(pT+cH)+'"/><path d="'+ad+'" fill="url(#blueArea)" opacity=".78"/><polyline class="'+pc+'" points="'+jp+'"/><polyline class="'+hc+'" points="'+hp+'"/><g text-anchor="middle">'+ds+'</g></svg>';
+ return '<svg class="lux-chart" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" role="img">'
+ +'<defs>'
+ +'<filter id="glowBlue" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur result="blur" stdDeviation="4"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
+ +'<filter id="glowGold" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur result="blur" stdDeviation="4"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
+ +'<linearGradient id="blueArea" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#60a5fa" stop-opacity=".20"/><stop offset="1" stop-color="#60a5fa" stop-opacity="0"/></linearGradient>'
+ +'</defs>'
+ +gr
+ +'<line class="axis" x1="'+pL+'" x2="'+(W-pR)+'" y1="'+(pT+cH)+'" y2="'+(pT+cH)+'"/>'
+ +'<line class="axis" x1="'+pL+'" x2="'+pL+'" y1="'+pT+'" y2="'+(pT+cH)+'"/>'
+ +'<path d="'+ad+'" fill="url(#blueArea)" opacity=".78"/>'
+ +'<polyline class="'+pc+'" points="'+jp+'"/>'
+ +'<polyline class="'+hc+'" points="'+hp+'"/>'
+ +'<g text-anchor="middle">'+ds+'</g>'
+ +'</svg>';
  }
- function updActChart(d){var c=document.querySelector('#overview .executive-line-card:not(.forecast-line-card)');if(!c||!d.length)return;var w=c.querySelector('.lux-chart-wrap');if(w)w.innerHTML=buildSVG(d.map(function(x){return{n:x.period,j:x.rateJhc,h:x.rateHhc};}),false);}
- function updForeChart(d){var c=document.querySelector('#overview .forecast-line-card');if(!c||!d.length)return;var w=c.querySelector('.lux-chart-wrap');if(w)w.innerHTML=buildSVG(d.map(function(x){return{n:x.period,j:x.jhc,h:x.hhc};}),true);}
- function updCards(d){
- var g=document.querySelector('#overview .period-cards-grid');if(!g||!d.length)return;
+
+ // ── update actual-data chart (only periods with data) ─────────
+ function updActChart(rows){
+ var c=document.querySelector('#overview .executive-line-card:not(.forecast-line-card)');
+ if(!c) return;
+ // rows = parsed perf data, filter where total > 0
+ var pts=rows.filter(function(d){return d.total>0;})
+ .map(function(d){return{n:d.period,j:d.rateJhc,h:d.rateHhc};});
+ var w=c.querySelector('.lux-chart-wrap');
+ if(w&&pts.length) w.innerHTML=buildSVG(pts,false);
+ }
+
+ // ── update forecast chart ─────────────────────────────────────
+ function updForeChart(rows){
+ var c=document.querySelector('#overview .forecast-line-card');
+ if(!c) return;
+ var pts=rows.filter(function(d){return d.jhc>0||d.hhc>0;})
+ .map(function(d){return{n:d.period,j:d.jhc,h:d.hhc};});
+ var w=c.querySelector('.lux-chart-wrap');
+ if(w&&pts.length) w.innerHTML=buildSVG(pts,true);
+ }
+
+ // ── update period cards (only periods with total > 0) ─────────
+ function updCards(rows){
+ var g=document.querySelector('#overview .period-cards-grid');
+ if(!g) return;
+ var active=rows.filter(function(d){return d.total>0;});
+ if(!active.length) return;
  var h2='';
- d.forEach(function(d2){var tp=d2.total>=60?'ربع':'شهر';
- h2+='<div class="kpi-card period-card"><small class="period-title">'+d2.period+'</small><strong class="period-type">'+tp+'</strong><div class="page-caption metric-row metric-achieved">محققة حسب مستهدف JHC: <b class="ok metric-value value-achieved">'+d2.achJhc+'</b></div><div class="page-caption metric-row metric-achieved">محققة حسب مستهدف HHC: <b class="ok metric-value value-achieved">'+d2.achHhc+'</b></div><div class="page-caption metric-row metric-cluster-failed">متعثر حسب مستهدف JHC: <b class="metric-value value-cluster-failed">'+d2.failJhc+'</b></div><div class="page-caption metric-row metric-company-failed">متعثر حسب مستهدف HHC: <b class="metric-value value-company-failed">'+d2.failHhc+'</b></div><div class="page-caption metric-row metric-noinput">لا يوجد إدخال: <b class="metric-value value-noinput">'+d2.noinput+'</b></div><div class="page-caption metric-row metric-ministry">تحديث وزاري: <b class="metric-value value-ministry">'+d2.ministry+'</b></div><div class="page-caption metric-row metric-cluster-rate">الاداء الاجمالي (JHC TARGET): <b class="metric-value value-cluster-rate">'+d2.rateJhc+'%</b></div><div class="page-caption metric-row metric-company-rate">الاداء الاجمالي (HHC TARGET): <b class="metric-value value-company-rate">'+d2.rateHhc+'%</b></div></div>';
+ active.forEach(function(d){
+ var tp=d.type||'شهر';
+ h2+='<div class="kpi-card period-card">'
+ +'<small class="period-title">'+d.period+'</small>'
+ +'<strong class="period-type">'+tp+'</strong>'
+ +'<div class="page-caption metric-row metric-achieved">محققة JHC: <b class="ok metric-value value-achieved">'+d.achJhc+'</b></div>'
+ +'<div class="page-caption metric-row metric-achieved">محققة HHC: <b class="ok metric-value value-achieved">'+d.achHhc+'</b></div>'
+ +'<div class="page-caption metric-row metric-cluster-failed">متعثر JHC: <b class="metric-value value-cluster-failed">'+d.failJhc+'</b></div>'
+ +'<div class="page-caption metric-row metric-company-failed">متعثر HHC: <b class="metric-value value-company-failed">'+d.failHhc+'</b></div>'
+ +'<div class="page-caption metric-row metric-noinput">بدون إدخال: <b class="metric-value value-noinput">'+d.noinput+'</b></div>'
+ +'<div class="page-caption metric-row metric-ministry">تحديث وزاري: <b class="metric-value value-ministry">'+d.ministry+'</b></div>'
+ +'<div class="page-caption metric-row metric-cluster-rate">إنجاز JHC: <b class="metric-value value-cluster-rate">'+d.rateJhc+'%</b></div>'
+ +'<div class="page-caption metric-row metric-company-rate">إنجاز HHC: <b class="metric-value value-company-rate">'+d.rateHhc+'%</b></div>'
+ +'</div>';
  });
  g.innerHTML=h2;
  }
+
+ // ── update top 5 summary cards ────────────────────────────────
+ function updTopCards(rows){
+ // Count KPIs by type from active rows
+ var monthly=0,quarterly=0,half=0,annual=0,total=0;
+ rows.forEach(function(d){
+ if(d.total<=0) return;
+ var t=String(d.type||'').trim();
+ if(t==='شهر') monthly+=d.total;
+ else if(t==='ربع') quarterly+=d.total;
+ else if(t==='نصف سنوي') half+=d.total;
+ else if(t==='سنوي') annual+=d.total;
+ });
+ // Use maximum unique KPI count from first month as total
+ var months=rows.filter(function(d){return d.type==='شهر'&&d.total>0;});
+ total=months.length>0?months[0].total:0;
+ // Update DOM
+ var ids=['sc-total','sc-monthly','sc-quarterly','sc-half','sc-annual'];
+ var vals=[total, months.length>0?months[0].total:0, quarterly>0?64:0, half>0?half:0, annual>0?annual:0];
+ // Better: just show counts of each type
+ var mtot=months.length>0?months[0].total:0;
+ var qs=rows.filter(function(d){return d.type==='ربع'&&d.total>0;});
+ var hs=rows.filter(function(d){return d.type==='نصف سنوي'&&d.total>0;});
+ var as=rows.filter(function(d){return d.type==='سنوي'&&d.total>0;});
+ var qtot=qs.length>0?qs[0].total:0;
+ var htot=hs.length>0?hs[0].total:0;
+ var atot=as.length>0?as[0].total:0;
+ // total = max across all periods
+ var allTots=rows.filter(function(d){return d.total>0;}).map(function(d){return d.total;});
+ var bigTot=allTots.length>0?Math.max.apply(null,allTots):0;
+ var el;
+ el=document.getElementById('sc-total'); if(el) el.textContent=bigTot||'—';
+ el=document.getElementById('sc-monthly'); if(el) el.textContent=mtot||'—';
+ el=document.getElementById('sc-quarterly'); if(el) el.textContent=qtot||'—';
+ el=document.getElementById('sc-half'); if(el) el.textContent=htot||'—';
+ el=document.getElementById('sc-annual'); if(el) el.textContent=atot||'—';
+ }
+
+ // ── parse performance sheet ───────────────────────────────────
  function parsPerf(rows){
- var res=[],cl=function(v){return String(v==null?'':v).trim();},hi=-1;
- for(var i=0;i<rows.length;i++){if((rows[i]||[]).some(function(c){return/الفترة|period/i.test(cl(c));})){hi=i;break;}}
- for(var i=hi>=0?hi+1:0;i<rows.length;i++){
- var r=rows[i]||[],p=cl(r[0]);if(!p||p==='الفترة')continue;
- var tot=parseFloat(cl(r[2]))||0,fj=parseFloat(cl(r[3]))||0,fh=parseFloat(cl(r[4]))||0,ni=parseFloat(cl(r[5]))||0,mu=parseFloat(cl(r[6]))||0,aj=parseFloat(cl(r[7]))||0,ah=parseFloat(cl(r[8]))||0;
- var rj=parseFloat(String(cl(r[9])).replace('%',''))||0,rh=parseFloat(String(cl(r[10])).replace('%',''))||0;
- if(rj>0&&rj<=1)rj=Math.round(rj*1000)/10;if(rh>0&&rh<=1)rh=Math.round(rh*1000)/10;
- if(rj===0&&(aj+fj)>0)rj=Math.round(aj/(aj+fj)*1000)/10;if(rh===0&&(ah+fh)>0)rh=Math.round(ah/(ah+fh)*1000)/10;
- res.push({period:p,total:tot,failJhc:fj,failHhc:fh,noinput:ni,ministry:mu,achJhc:aj,achHhc:ah,rateJhc:rj,rateHhc:rh});
- }return res;
+ var res=[],hi=-1;
+ for(var i=0;i<rows.length;i++){
+ if((rows[i]||[]).some(function(c){return/الفترة|period/i.test(cl(c));})){hi=i;break;}
  }
+ for(var i=hi>=0?hi+1:0;i<rows.length;i++){
+ var r=rows[i]||[],p=cl(r[0]);
+ if(!p||p==='الفترة') continue;
+ var tp=cl(r[1]);
+ var tot=toNum(r[2]),fj=toNum(r[3]),fh=toNum(r[4]),ni=toNum(r[5]),mu=toNum(r[6]),aj=toNum(r[7]),ah=toNum(r[8]);
+ var rj=toRate(r[9]),rh=toRate(r[10]);
+ if(rj===0&&(aj+fj)>0) rj=Math.round(aj/(aj+fj)*1000)/10;
+ if(rh===0&&(ah+fh)>0) rh=Math.round(ah/(ah+fh)*1000)/10;
+ res.push({period:p,type:tp,total:tot,failJhc:fj,failHhc:fh,noinput:ni,ministry:mu,achJhc:aj,achHhc:ah,rateJhc:rj,rateHhc:rh});
+ }
+ return res;
+ }
+
+ // ── parse forecast sheet ──────────────────────────────────────
  function parsFore(rows){
- var res=[],cl=function(v){return String(v==null?'':v).trim();},hi=-1;
- for(var i=0;i<rows.length;i++){if((rows[i]||[]).some(function(c){return/فترة|period/i.test(cl(c));})){hi=i;break;}}
- for(var i=hi>=0?hi+1:0;i<rows.length;i++){
- var r=rows[i]||[],p=cl(r[0]);if(!p||p==='الفترة القادمة')continue;
- var j=parseFloat(String(cl(r[2])).replace('%',''))||0,h=parseFloat(String(cl(r[3])).replace('%',''))||0;
- if(j>0&&j<=1)j=Math.round(j*1000)/10;if(h>0&&h<=1)h=Math.round(h*1000)/10;
- res.push({period:p,jhc:j,hhc:h});
- }return res;
+ var res=[],hi=-1;
+ for(var i=0;i<rows.length;i++){
+ if((rows[i]||[]).some(function(c){return/فترة|period/i.test(cl(c));})){hi=i;break;}
  }
+ for(var i=hi>=0?hi+1:0;i<rows.length;i++){
+ var r=rows[i]||[],p=cl(r[0]);
+ if(!p||p==='الفترة القادمة') continue;
+ var j=toRate(r[2]),h=toRate(r[3]);
+ if(j===0&&h===0) continue;
+ res.push({period:p,jhc:j,hhc:h});
+ }
+ return res;
+ }
+
+ // ── update period filter dropdown ────────────────────────────
  function updFltPeriod(perf,fore){
  var s=document.getElementById('fltPeriod');if(!s)return;
  while(s.options.length>1)s.remove(1);
  var seen={};
- perf.concat(fore).forEach(function(d){if(!seen[d.period]){seen[d.period]=1;var o=document.createElement('option');o.value=d.period;o.textContent=d.period;s.appendChild(o);}});
+ perf.filter(function(d){return d.total>0;}).concat(fore).forEach(function(d){
+ if(!seen[d.period]){seen[d.period]=1;var o=document.createElement('option');o.value=d.period;o.textContent=d.period;s.appendChild(o);}
+ });
  }
+
  async function handleFile(file){
  if(!file) return;
  if(typeof XLSX==='undefined'){
@@ -695,7 +826,12 @@ document.addEventListener('DOMContentLoaded',()=>{
  refreshMonthlyVisuals();
  if(window.collectFilterOptions) window.collectFilterOptions();
  if(window.resetGlobalFilter) window.resetGlobalFilter();
- if(perfData.length){updCards(perfData);updActChart(perfData);updFltPeriod(perfData,foreData);}
+ if(perfData.length){
+ updTopCards(perfData);
+ updCards(perfData);
+ updActChart(perfData);
+ updFltPeriod(perfData,foreData);
+ }
  if(foreData.length) updForeChart(foreData);
  setImportStatus(updated?`تم استيراد Excel وتحديث ${updated} صفحة.`:'تمت قراءة الملف، لكن لم يتم العثور على شيتات مطابقة للصفحات.', !!updated);
  }catch(err){
