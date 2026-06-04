@@ -606,6 +606,71 @@ document.addEventListener('DOMContentLoaded',()=>{
  if(/Audit|تدقيق/.test(n)) return 'audit';
  return null;
  }
+ // ── Build SVG chart ──────────────────────────────────────────────
+ function buildSVG(pts,isFore){
+ var W=780,H=350,pL=60,pR=20,pT=38,pB=72,cW=W-pL-pR,cH=H-pT-pB;
+ var vals=[];pts.forEach(function(p){if(p.j>0)vals.push(p.j);if(p.h>0)vals.push(p.h);});
+ if(!vals.length)vals=[50,100];
+ var mn=Math.max(0,Math.floor((Math.min.apply(null,vals)-8)/10)*10);
+ var mx=Math.ceil((Math.max.apply(null,vals)+8)/10)*10;
+ if(mx-mn<20)mx=mn+20;
+ function yp(v){return pT+cH-(v-mn)/(mx-mn)*cH;}
+ function xp(i){return pts.length>1?pL+i*cW/(pts.length-1):pL+cW/2;}
+ var gr='';
+ for(var v=mn;v<=mx;v+=10){var y=yp(v).toFixed(1);gr+='<line class="grid" x1="'+pL+'" x2="'+(W-pR)+'" y1="'+y+'" y2="'+y+'"/><text class="y-label" x="22" y="'+(parseFloat(y)+4).toFixed(1)+'">'+v+'%</text>';}
+ var jp=pts.map(function(p,i){return xp(i).toFixed(1)+','+yp(p.j).toFixed(1);}).join(' ');
+ var hp=pts.map(function(p,i){return xp(i).toFixed(1)+','+yp(p.h).toFixed(1);}).join(' ');
+ var ad='M'+pts.map(function(p,i){return xp(i).toFixed(1)+' '+yp(p.j).toFixed(1);}).join(' L')+' L'+xp(pts.length-1).toFixed(1)+' '+(pT+cH)+' L'+xp(0).toFixed(1)+' '+(pT+cH)+' Z';
+ var pc=isFore?'cluster-poly forecast-poly':'cluster-poly',hc=isFore?'company-poly forecast-poly':'company-poly',lc=isFore?'forecast-label label':'label';
+ var ds='';
+ pts.forEach(function(p,i){
+ var x=xp(i).toFixed(1),yj=yp(p.j).toFixed(1),yh=yp(p.h).toFixed(1);
+ var jtx=x,htx=x;
+ if(pts.length>6){if(i%2===0){jtx=(parseFloat(x)-12).toFixed(1);htx=jtx;}else{jtx=(parseFloat(x)+12).toFixed(1);htx=jtx;}}
+ ds+='<circle class="dot-blue" cx="'+x+'" cy="'+yj+'" r="8" filter="url(#glowBlue)"/><text class="value-blue" x="'+jtx+'" y="'+(parseFloat(yj)-18).toFixed(1)+'">'+p.j+'%</text>';
+ ds+='<circle class="dot-gold" cx="'+x+'" cy="'+yh+'" r="8" filter="url(#glowGold)"/><text class="value-gold" x="'+htx+'" y="'+(parseFloat(yh)+20).toFixed(1)+'">'+p.h+'%</text>';
+ ds+='<text class="'+lc+'" x="'+x+'" y="315">'+p.n+'</text>';
+ });
+ return '<svg class="lux-chart" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" role="img"><defs><filter id="glowBlue" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur result="blur" stdDeviation="4"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="glowGold" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur result="blur" stdDeviation="4"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter><linearGradient id="blueArea" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#60a5fa" stop-opacity=".20"/><stop offset="1" stop-color="#60a5fa" stop-opacity="0"/></linearGradient></defs>'+gr+'<line class="axis" x1="'+pL+'" x2="'+(W-pR)+'" y1="'+(pT+cH)+'" y2="'+(pT+cH)+'"/><line class="axis" x1="'+pL+'" x2="'+pL+'" y1="'+pT+'" y2="'+(pT+cH)+'"/><path d="'+ad+'" fill="url(#blueArea)" opacity=".78"/><polyline class="'+pc+'" points="'+jp+'"/><polyline class="'+hc+'" points="'+hp+'"/><g text-anchor="middle">'+ds+'</g></svg>';
+ }
+ function updActChart(d){var c=document.querySelector('#overview .executive-line-card:not(.forecast-line-card)');if(!c||!d.length)return;var w=c.querySelector('.lux-chart-wrap');if(w)w.innerHTML=buildSVG(d.map(function(x){return{n:x.period,j:x.rateJhc,h:x.rateHhc};}),false);}
+ function updForeChart(d){var c=document.querySelector('#overview .forecast-line-card');if(!c||!d.length)return;var w=c.querySelector('.lux-chart-wrap');if(w)w.innerHTML=buildSVG(d.map(function(x){return{n:x.period,j:x.jhc,h:x.hhc};}),true);}
+ function updCards(d){
+ var g=document.querySelector('#overview .period-cards-grid');if(!g||!d.length)return;
+ var h2='';
+ d.forEach(function(d2){var tp=d2.total>=60?'ربع':'شهر';
+ h2+='<div class="kpi-card period-card"><small class="period-title">'+d2.period+'</small><strong class="period-type">'+tp+'</strong><div class="page-caption metric-row metric-achieved">محققة حسب مستهدف JHC: <b class="ok metric-value value-achieved">'+d2.achJhc+'</b></div><div class="page-caption metric-row metric-achieved">محققة حسب مستهدف HHC: <b class="ok metric-value value-achieved">'+d2.achHhc+'</b></div><div class="page-caption metric-row metric-cluster-failed">متعثر حسب مستهدف JHC: <b class="metric-value value-cluster-failed">'+d2.failJhc+'</b></div><div class="page-caption metric-row metric-company-failed">متعثر حسب مستهدف HHC: <b class="metric-value value-company-failed">'+d2.failHhc+'</b></div><div class="page-caption metric-row metric-noinput">لا يوجد إدخال: <b class="metric-value value-noinput">'+d2.noinput+'</b></div><div class="page-caption metric-row metric-ministry">تحديث وزاري: <b class="metric-value value-ministry">'+d2.ministry+'</b></div><div class="page-caption metric-row metric-cluster-rate">الاداء الاجمالي (JHC TARGET): <b class="metric-value value-cluster-rate">'+d2.rateJhc+'%</b></div><div class="page-caption metric-row metric-company-rate">الاداء الاجمالي (HHC TARGET): <b class="metric-value value-company-rate">'+d2.rateHhc+'%</b></div></div>';
+ });
+ g.innerHTML=h2;
+ }
+ function parsPerf(rows){
+ var res=[],cl=function(v){return String(v==null?'':v).trim();},hi=-1;
+ for(var i=0;i<rows.length;i++){if((rows[i]||[]).some(function(c){return/الفترة|period/i.test(cl(c));})){hi=i;break;}}
+ for(var i=hi>=0?hi+1:0;i<rows.length;i++){
+ var r=rows[i]||[],p=cl(r[0]);if(!p||p==='الفترة')continue;
+ var tot=parseFloat(cl(r[2]))||0,fj=parseFloat(cl(r[3]))||0,fh=parseFloat(cl(r[4]))||0,ni=parseFloat(cl(r[5]))||0,mu=parseFloat(cl(r[6]))||0,aj=parseFloat(cl(r[7]))||0,ah=parseFloat(cl(r[8]))||0;
+ var rj=parseFloat(String(cl(r[9])).replace('%',''))||0,rh=parseFloat(String(cl(r[10])).replace('%',''))||0;
+ if(rj>0&&rj<=1)rj=Math.round(rj*1000)/10;if(rh>0&&rh<=1)rh=Math.round(rh*1000)/10;
+ if(rj===0&&(aj+fj)>0)rj=Math.round(aj/(aj+fj)*1000)/10;if(rh===0&&(ah+fh)>0)rh=Math.round(ah/(ah+fh)*1000)/10;
+ res.push({period:p,total:tot,failJhc:fj,failHhc:fh,noinput:ni,ministry:mu,achJhc:aj,achHhc:ah,rateJhc:rj,rateHhc:rh});
+ }return res;
+ }
+ function parsFore(rows){
+ var res=[],cl=function(v){return String(v==null?'':v).trim();},hi=-1;
+ for(var i=0;i<rows.length;i++){if((rows[i]||[]).some(function(c){return/فترة|period/i.test(cl(c));})){hi=i;break;}}
+ for(var i=hi>=0?hi+1:0;i<rows.length;i++){
+ var r=rows[i]||[],p=cl(r[0]);if(!p||p==='الفترة القادمة')continue;
+ var j=parseFloat(String(cl(r[2])).replace('%',''))||0,h=parseFloat(String(cl(r[3])).replace('%',''))||0;
+ if(j>0&&j<=1)j=Math.round(j*1000)/10;if(h>0&&h<=1)h=Math.round(h*1000)/10;
+ res.push({period:p,jhc:j,hhc:h});
+ }return res;
+ }
+ function updFltPeriod(perf,fore){
+ var s=document.getElementById('fltPeriod');if(!s)return;
+ while(s.options.length>1)s.remove(1);
+ var seen={};
+ perf.concat(fore).forEach(function(d){if(!seen[d.period]){seen[d.period]=1;var o=document.createElement('option');o.value=d.period;o.textContent=d.period;s.appendChild(o);}});
+ }
  async function handleFile(file){
  if(!file) return;
  if(typeof XLSX==='undefined'){
@@ -617,16 +682,21 @@ document.addEventListener('DOMContentLoaded',()=>{
  const buf=await file.arrayBuffer();
  const wb=XLSX.read(buf,{type:'array',cellDates:false});
  let updated=0;
+ var perfData=[],foreData=[];
  wb.SheetNames.forEach(name=>{
  const sid=sectionForSheet(name); if(!sid) return;
  const rows=XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,defval:''});
  if(sid==='overview') updateOverviewCards(rows);
  if(sid==='compare') updateCompareCards(rows);
  if(replaceSectionTable(sid, rows)) updated++;
+ if(/الأداء الشهري/i.test(String(name).trim())) perfData=parsPerf(rows);
+ if(/التحليل التنبؤي|التنبؤ/i.test(String(name).trim())) foreData=parsFore(rows);
  });
  refreshMonthlyVisuals();
  if(window.collectFilterOptions) window.collectFilterOptions();
  if(window.resetGlobalFilter) window.resetGlobalFilter();
+ if(perfData.length){updCards(perfData);updActChart(perfData);updFltPeriod(perfData,foreData);}
+ if(foreData.length) updForeChart(foreData);
  setImportStatus(updated?`تم استيراد Excel وتحديث ${updated} صفحة.`:'تمت قراءة الملف، لكن لم يتم العثور على شيتات مطابقة للصفحات.', !!updated);
  }catch(err){
  console.error(err);
@@ -660,281 +730,6 @@ function downloadSectionExcel(sectionId){
  if(!table){ alert('لا يوجد جدول قابل للتصدير في هذه الصفحة'); return; }
  const title=(sec.querySelector('h1,h2')?.innerText || sectionId).replace(/[\\/:*?"<>|]/g,'_').trim();
  const html='<!DOCTYPE html><html><head><meta charset="utf-8"></head><body dir="rtl"><h2>'+title+'</h2>'+table.outerHTML+'<!-- Updated from Excel: failed rows=74; summary=[{"period": "يناير", "type": "شهر", "total": 51, "failed_jhc": 9, "failed_hhc": 13, "noinput": 0, "ministry": 1, "ach_jhc": 41, "ach_hhc": 37, "rate_jhc": 80.4, "rate_hhc": 72.5}, {"period": "فبراير", "type": "شهر", "total": 51, "failed_jhc": 8, "failed_hhc": 12, "noinput": 0, "ministry": 1, "ach_jhc": 42, "ach_hhc": 38, "rate_jhc": 82.4, "rate_hhc": 74.5}, {"period": "مارس", "type": "شهر", "total": 51, "failed_jhc": 10, "failed_hhc": 14, "noinput": 0, "ministry": 1, "ach_jhc": 40, "ach_hhc": 36, "rate_jhc": 78.4, "rate_hhc": 70.6}, {"period": "الربع الأول", "type": "ربع", "total": 64, "failed_jhc": 13, "failed_hhc": 12, "noinput": 0, "ministry": 4, "ach_jhc": 47, "ach_hhc": 48, "rate_jhc": 73.4, "rate_hhc": 75.0}, {"period": "أبريل", "type": "شهر", "total": 51, "failed_jhc": 8, "failed_hhc": 14, "noinput": 0, "ministry": 1, "ach_jhc": 42, "ach_hhc": 36, "rate_jhc": 82.4, "rate_hhc": 70.6}] -->
-
-<script>
-// ═══════════════════════════════════════════════════
-// FULL LIVE UPDATE ENGINE - updates ALL visual elements
-// ═══════════════════════════════════════════════════
-(function(){
-
-  // ── Parse summary from شيت "الأداء الشهري والربعي" ──────────
-  function parsePeriodSummary(rows){
-    // Expected cols: الفترة, نوع الفترة, إجمالي, متعثر JHC, متعثر HHC, بدون إدخال, تحديث وزاري, محقق JHC, محقق HHC, نسبة JHC, نسبة HHC
-    const result = [];
-    const clean = (v) => String(v == null ? '' : v).trim();
-    
-    // Find header row
-    let hi = -1;
-    for(let i = 0; i < rows.length; i++){
-      const r = rows[i] || [];
-      const filled = r.filter(c => clean(c) !== '').length;
-      if(filled >= 3 && r.some(c => /فترة|period|الفترة/i.test(clean(c)))) { hi = i; break; }
-      if(filled >= 3 && r.some(c => /يناير|فبراير|مارس|الربع/.test(clean(c)))) { hi = i-1; break; }
-    }
-    
-    // If no header found, try data directly
-    const dataStart = hi >= 0 ? hi + 1 : 0;
-    
-    for(let i = dataStart; i < rows.length; i++){
-      const r = rows[i] || [];
-      const period = clean(r[0]);
-      if(!period || period === 'الفترة') continue;
-      
-      const total    = parseFloat(clean(r[2])) || 0;
-      const failJhc  = parseFloat(clean(r[3])) || 0;
-      const failHhc  = parseFloat(clean(r[4])) || 0;
-      const noinput  = parseFloat(clean(r[5])) || 0;
-      const ministry = parseFloat(clean(r[6])) || 0;
-      const achJhc   = parseFloat(clean(r[7])) || 0;
-      const achHhc   = parseFloat(clean(r[8])) || 0;
-      
-      // Parse rates - handle both decimal (0.804) and percent (80.4%) formats
-      let rateJhc = parseFloat(clean(r[9])) || 0;
-      let rateHhc = parseFloat(clean(r[10])) || 0;
-      if(rateJhc > 0 && rateJhc <= 1) rateJhc = Math.round(rateJhc * 1000) / 10;
-      if(rateHhc > 0 && rateHhc <= 1) rateHhc = Math.round(rateHhc * 1000) / 10;
-      
-      // Also try to compute rate if columns are formula results (0)
-      if(rateJhc === 0 && (achJhc + failJhc) > 0)
-        rateJhc = Math.round(achJhc / (achJhc + failJhc) * 1000) / 10;
-      if(rateHhc === 0 && (achHhc + failHhc) > 0)
-        rateHhc = Math.round(achHhc / (achHhc + failHhc) * 1000) / 10;
-
-      result.push({ period, total, failJhc, failHhc, noinput, ministry, achJhc, achHhc, rateJhc, rateHhc });
-    }
-    return result;
-  }
-
-  // ── Parse forecast from شيت "التحليل التنبؤي" ──────────────
-  function parseForecast(rows){
-    const result = [];
-    const clean = (v) => String(v == null ? '' : v).trim();
-    let hi = -1;
-    for(let i = 0; i < rows.length; i++){
-      const r = rows[i] || [];
-      if(r.some(c => /فترة|period/i.test(clean(c)))) { hi = i; break; }
-    }
-    const dataStart = hi >= 0 ? hi + 1 : 0;
-    for(let i = dataStart; i < rows.length; i++){
-      const r = rows[i] || [];
-      const period = clean(r[0]);
-      if(!period || period === 'الفترة القادمة') continue;
-      let jhc = parseFloat(String(clean(r[2])).replace('%','')) || 0;
-      let hhc = parseFloat(String(clean(r[3])).replace('%','')) || 0;
-      if(jhc > 1) jhc = jhc; else jhc = jhc * 100;
-      if(hhc > 1) hhc = hhc; else hhc = hhc * 100;
-      result.push({ period, jhc: Math.round(jhc*10)/10, hhc: Math.round(hhc*10)/10 });
-    }
-    return result;
-  }
-
-  // ── Update period cards in overview ─────────────────────────
-  function updatePeriodCards(summaryData){
-    const grid = document.querySelector('#overview .period-cards-grid');
-    if(!grid || !summaryData.length) return;
-    
-    grid.innerHTML = summaryData.map(d => {
-      const typeLabel = d.total >= 60 ? 'ربع' : 'شهر';
-      return \`<div class="kpi-card period-card">
-        <small class="period-title">\${d.period}</small>
-        <strong class="period-type">\${typeLabel}</strong>
-        <div class="page-caption metric-row metric-achieved">محققة حسب مستهدف JHC: <b class="ok metric-value value-achieved">\${d.achJhc}</b></div>
-        <div class="page-caption metric-row metric-achieved">محققة حسب مستهدف HHC: <b class="ok metric-value value-achieved">\${d.achHhc}</b></div>
-        <div class="page-caption metric-row metric-cluster-failed">متعثر حسب مستهدف JHC: <b class="metric-value value-cluster-failed">\${d.failJhc}</b></div>
-        <div class="page-caption metric-row metric-company-failed">متعثر حسب مستهدف HHC: <b class="metric-value value-company-failed">\${d.failHhc}</b></div>
-        <div class="page-caption metric-row metric-noinput">لا يوجد إدخال: <b class="metric-value value-noinput">\${d.noinput}</b></div>
-        <div class="page-caption metric-row metric-ministry">تحديث وزاري: <b class="metric-value value-ministry">\${d.ministry}</b></div>
-        <div class="page-caption metric-row metric-cluster-rate">الاداء الاجمالي (JHC TARGET): <b class="metric-value value-cluster-rate">\${d.rateJhc}%</b></div>
-        <div class="page-caption metric-row metric-company-rate">الاداء الاجمالي (HHC TARGET): <b class="metric-value value-company-rate">\${d.rateHhc}%</b></div>
-      </div>\`;
-    }).join('');
-  }
-
-  // ── Render lux SVG chart ─────────────────────────────────────
-  function renderLuxChart(container, points, isForecast){
-    if(!container || !points.length) return;
-    
-    const W = 780, H = 350;
-    const pad = { l:60, r:20, t:38, b:72 };
-    const chartW = W - pad.l - pad.r;
-    const chartH = H - pad.t - pad.b;
-    
-    // Y axis: find range, ensure 50%-100% fits
-    const allRates = points.flatMap(p => [p.jhc, p.hhc]).filter(v => v > 0);
-    const minV = Math.max(0, Math.floor((Math.min(...allRates, 50) - 5) / 10) * 10);
-    const maxV = Math.ceil((Math.max(...allRates, 100) + 5) / 10) * 10;
-    
-    const yLevels = [];
-    for(let v = minV; v <= maxV; v += 10) yLevels.push(v);
-    
-    const yPos = (val) => pad.t + chartH - (val - minV) / (maxV - minV) * chartH;
-    
-    const n = points.length;
-    const xStep = n > 1 ? chartW / (n - 1) : 0;
-    const xPos = (i) => pad.l + i * xStep;
-    
-    const jhcPts = points.map((p,i) => `${xPos(i).toFixed(1)},${yPos(p.jhc).toFixed(1)}`).join(' ');
-    const hhcPts = points.map((p,i) => `${xPos(i).toFixed(1)},${yPos(p.hhc).toFixed(1)}`).join(' ');
-    
-    // Area under JHC line
-    const areaPath = points.map((p,i) => `${xPos(i).toFixed(1)} ${yPos(p.jhc).toFixed(1)}`).join(' L ');
-    const fullArea = `M${areaPath} L${xPos(n-1).toFixed(1)} ${(pad.t+chartH)} L${xPos(0).toFixed(1)} ${(pad.t+chartH)} Z`;
-    
-    const glowFilters = \`
-      <filter id="glowBlue2" x="-40%" y="-40%" width="180%" height="180%">
-        <feGaussianBlur result="blur" stdDeviation="4"/>
-        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>
-      <filter id="glowGold2" x="-40%" y="-40%" width="180%" height="180%">
-        <feGaussianBlur result="blur" stdDeviation="4"/>
-        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>
-      <linearGradient id="blueArea2" x1="0" x2="0" y1="0" y2="1">
-        <stop offset="0" stop-color="#60a5fa" stop-opacity=".20"/>
-        <stop offset="1" stop-color="#60a5fa" stop-opacity="0"/>
-      </linearGradient>\`;
-    
-    let gridLines = yLevels.map(v => {
-      const y = yPos(v).toFixed(1);
-      return \`<line class="grid" x1="\${pad.l}" x2="\${W-pad.r}" y1="\${y}" y2="\${y}"/>
-              <text class="y-label" x="25" y="\${(parseFloat(y)+4).toFixed(1)}">\${v}%</text>\`;
-    }).join('');
-    
-    const polyClass = isForecast ? 'cluster-poly forecast-poly' : 'cluster-poly';
-    const polyClass2 = isForecast ? 'company-poly forecast-poly' : 'company-poly';
-    const labelClass = isForecast ? 'forecast-label label' : 'label';
-    
-    let dots = points.map((p, i) => {
-      const x = xPos(i).toFixed(1);
-      const yJ = yPos(p.jhc).toFixed(1);
-      const yH = yPos(p.hhc).toFixed(1);
-      const lblY = 315;
-      
-      // Offset text to avoid overlap
-      const offset = (i % 2 === 0 && n > 4) ? -18 : 18;
-      const jTextY = (parseFloat(yJ) - 18).toFixed(1);
-      const hTextY = (parseFloat(yH) + 20).toFixed(1);
-      const jTextX = (n > 6 && i % 2 !== 0) ? (parseFloat(x) + 16).toFixed(1) : x;
-      const hTextX = (n > 6 && i % 2 !== 0) ? (parseFloat(x) - 16).toFixed(1) : x;
-
-      return \`<circle class="dot-blue" cx="\${x}" cy="\${yJ}" r="8" filter="url(#glowBlue2)"/>
-              <text class="value-blue" x="\${jTextX}" y="\${jTextY}">\${p.jhc}%</text>
-              <circle class="dot-gold" cx="\${x}" cy="\${yH}" r="8" filter="url(#glowGold2)"/>
-              <text class="value-gold" x="\${hTextX}" y="\${hTextY}">\${p.hhc}%</text>
-              <text class="\${labelClass}" x="\${x}" y="\${lblY}">\${p.period}</text>\`;
-    }).join('');
-    
-    const svg = \`<svg class="lux-chart" viewBox="0 0 \${W} \${H}" preserveAspectRatio="xMidYMid meet" role="img">
-      <defs>\${glowFilters}</defs>
-      \${gridLines}
-      <line class="axis" x1="\${pad.l}" x2="\${W-pad.r}" y1="\${pad.t+chartH}" y2="\${pad.t+chartH}"/>
-      <line class="axis" x1="\${pad.l}" x2="\${pad.l}" y1="\${pad.t}" y2="\${pad.t+chartH}"/>
-      <path d="\${fullArea}" fill="url(#blueArea2)" opacity=".78"/>
-      <polyline class="\${polyClass}" points="\${jhcPts}"/>
-      <polyline class="\${polyClass2}" points="\${hhcPts}"/>
-      <g text-anchor="middle">\${dots}</g>
-    </svg>\`;
-    
-    const wrap = container.querySelector('.lux-chart-wrap');
-    if(wrap) wrap.innerHTML = svg;
-  }
-
-  // ── Update performance chart (actual data) ───────────────────
-  function updateActualChart(summaryData){
-    const card = document.querySelector('#overview .executive-line-card:not(.forecast-line-card)');
-    if(!card || !summaryData.length) return;
-    const points = summaryData.map(d => ({ period: d.period, jhc: d.rateJhc, hhc: d.rateHhc }));
-    renderLuxChart(card, points, false);
-  }
-
-  // ── Update forecast chart ────────────────────────────────────
-  function updateForecastChart(forecastData){
-    const card = document.querySelector('#overview .forecast-line-card');
-    if(!card || !forecastData.length) return;
-    const points = forecastData.map(d => ({ period: d.period, jhc: d.jhc, hhc: d.hhc }));
-    renderLuxChart(card, points, true);
-  }
-
-  // ── Update filter period dropdown ────────────────────────────
-  function updatePeriodFilter(summaryData, forecastData){
-    const sel = document.getElementById('fltPeriod');
-    if(!sel) return;
-    // Keep "الكل" option, rebuild the rest
-    while(sel.options.length > 1) sel.remove(1);
-    const all = [...summaryData.map(d=>d.period), ...forecastData.map(d=>d.period)];
-    const unique = [...new Set(all)];
-    unique.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p; opt.textContent = p;
-      sel.appendChild(opt);
-    });
-  }
-
-  // ── Main hook: override handleFile to also run live updates ──
-  const origHandleFile = window._origHandleFileRegistered;
-  
-  // Store sheets data globally for the update engine
-  window._liveUpdateSheets = {};
-  
-  // We hook into the XLSX import event
-  document.addEventListener('DOMContentLoaded', function(){
-    const input = document.getElementById('excelImportInput');
-    if(!input) return;
-    
-    input.addEventListener('change', async function(e){
-      const file = e.target.files && e.target.files[0];
-      if(!file) return;
-      if(typeof XLSX === 'undefined') return;
-      
-      try {
-        const buf = await file.arrayBuffer();
-        const wb = XLSX.read(buf, {type:'array', cellDates:false});
-        
-        // Find monthly performance sheet
-        let summaryData = [], forecastData = [];
-        
-        wb.SheetNames.forEach(name => {
-          const n = String(name||'').trim();
-          const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], {header:1, defval:''});
-          
-          if(/الأداء الشهري|الأداء_الشهري|monthly/i.test(n)){
-            summaryData = parsePeriodSummary(rows);
-          }
-          if(/التحليل التنبؤي|التنبؤ|forecast/i.test(n)){
-            forecastData = parseForecast(rows);
-          }
-        });
-        
-        // Wait a tick for the main handler to finish updating tables
-        setTimeout(function(){
-          if(summaryData.length){
-            updatePeriodCards(summaryData);
-            updateActualChart(summaryData);
-            updatePeriodFilter(summaryData, forecastData);
-          }
-          if(forecastData.length){
-            updateForecastChart(forecastData);
-          }
-        }, 200);
-        
-      } catch(err){
-        console.error('Live update engine error:', err);
-      }
-    }, true); // use capture to run after original handler
-  });
-
-})();
-</script>
 </body></html>';
  const blob=new Blob(['\ufeff'+html],{type:'application/vnd.ms-excel;charset=utf-8;'});
  const a=document.createElement('a');
@@ -1025,279 +820,4 @@ document.addEventListener('click', function(e){
 })();
 </script>
 <!-- Updated from Excel: failed rows=74; summary=[{"period": "يناير", "type": "شهر", "total": 51, "failed_jhc": 9, "failed_hhc": 13, "noinput": 0, "ministry": 1, "ach_jhc": 41, "ach_hhc": 37, "rate_jhc": 80.4, "rate_hhc": 72.5}, {"period": "فبراير", "type": "شهر", "total": 51, "failed_jhc": 8, "failed_hhc": 12, "noinput": 0, "ministry": 1, "ach_jhc": 42, "ach_hhc": 38, "rate_jhc": 82.4, "rate_hhc": 74.5}, {"period": "مارس", "type": "شهر", "total": 51, "failed_jhc": 10, "failed_hhc": 14, "noinput": 0, "ministry": 1, "ach_jhc": 40, "ach_hhc": 36, "rate_jhc": 78.4, "rate_hhc": 70.6}, {"period": "الربع الأول", "type": "ربع", "total": 64, "failed_jhc": 13, "failed_hhc": 12, "noinput": 0, "ministry": 4, "ach_jhc": 47, "ach_hhc": 48, "rate_jhc": 73.4, "rate_hhc": 75.0}, {"period": "أبريل", "type": "شهر", "total": 51, "failed_jhc": 8, "failed_hhc": 14, "noinput": 0, "ministry": 1, "ach_jhc": 42, "ach_hhc": 36, "rate_jhc": 82.4, "rate_hhc": 70.6}] -->
-
-<script>
-// ═══════════════════════════════════════════════════
-// FULL LIVE UPDATE ENGINE - updates ALL visual elements
-// ═══════════════════════════════════════════════════
-(function(){
-
-  // ── Parse summary from شيت "الأداء الشهري والربعي" ──────────
-  function parsePeriodSummary(rows){
-    // Expected cols: الفترة, نوع الفترة, إجمالي, متعثر JHC, متعثر HHC, بدون إدخال, تحديث وزاري, محقق JHC, محقق HHC, نسبة JHC, نسبة HHC
-    const result = [];
-    const clean = (v) => String(v == null ? '' : v).trim();
-    
-    // Find header row
-    let hi = -1;
-    for(let i = 0; i < rows.length; i++){
-      const r = rows[i] || [];
-      const filled = r.filter(c => clean(c) !== '').length;
-      if(filled >= 3 && r.some(c => /فترة|period|الفترة/i.test(clean(c)))) { hi = i; break; }
-      if(filled >= 3 && r.some(c => /يناير|فبراير|مارس|الربع/.test(clean(c)))) { hi = i-1; break; }
-    }
-    
-    // If no header found, try data directly
-    const dataStart = hi >= 0 ? hi + 1 : 0;
-    
-    for(let i = dataStart; i < rows.length; i++){
-      const r = rows[i] || [];
-      const period = clean(r[0]);
-      if(!period || period === 'الفترة') continue;
-      
-      const total    = parseFloat(clean(r[2])) || 0;
-      const failJhc  = parseFloat(clean(r[3])) || 0;
-      const failHhc  = parseFloat(clean(r[4])) || 0;
-      const noinput  = parseFloat(clean(r[5])) || 0;
-      const ministry = parseFloat(clean(r[6])) || 0;
-      const achJhc   = parseFloat(clean(r[7])) || 0;
-      const achHhc   = parseFloat(clean(r[8])) || 0;
-      
-      // Parse rates - handle both decimal (0.804) and percent (80.4%) formats
-      let rateJhc = parseFloat(clean(r[9])) || 0;
-      let rateHhc = parseFloat(clean(r[10])) || 0;
-      if(rateJhc > 0 && rateJhc <= 1) rateJhc = Math.round(rateJhc * 1000) / 10;
-      if(rateHhc > 0 && rateHhc <= 1) rateHhc = Math.round(rateHhc * 1000) / 10;
-      
-      // Also try to compute rate if columns are formula results (0)
-      if(rateJhc === 0 && (achJhc + failJhc) > 0)
-        rateJhc = Math.round(achJhc / (achJhc + failJhc) * 1000) / 10;
-      if(rateHhc === 0 && (achHhc + failHhc) > 0)
-        rateHhc = Math.round(achHhc / (achHhc + failHhc) * 1000) / 10;
-
-      result.push({ period, total, failJhc, failHhc, noinput, ministry, achJhc, achHhc, rateJhc, rateHhc });
-    }
-    return result;
-  }
-
-  // ── Parse forecast from شيت "التحليل التنبؤي" ──────────────
-  function parseForecast(rows){
-    const result = [];
-    const clean = (v) => String(v == null ? '' : v).trim();
-    let hi = -1;
-    for(let i = 0; i < rows.length; i++){
-      const r = rows[i] || [];
-      if(r.some(c => /فترة|period/i.test(clean(c)))) { hi = i; break; }
-    }
-    const dataStart = hi >= 0 ? hi + 1 : 0;
-    for(let i = dataStart; i < rows.length; i++){
-      const r = rows[i] || [];
-      const period = clean(r[0]);
-      if(!period || period === 'الفترة القادمة') continue;
-      let jhc = parseFloat(String(clean(r[2])).replace('%','')) || 0;
-      let hhc = parseFloat(String(clean(r[3])).replace('%','')) || 0;
-      if(jhc > 1) jhc = jhc; else jhc = jhc * 100;
-      if(hhc > 1) hhc = hhc; else hhc = hhc * 100;
-      result.push({ period, jhc: Math.round(jhc*10)/10, hhc: Math.round(hhc*10)/10 });
-    }
-    return result;
-  }
-
-  // ── Update period cards in overview ─────────────────────────
-  function updatePeriodCards(summaryData){
-    const grid = document.querySelector('#overview .period-cards-grid');
-    if(!grid || !summaryData.length) return;
-    
-    grid.innerHTML = summaryData.map(d => {
-      const typeLabel = d.total >= 60 ? 'ربع' : 'شهر';
-      return \`<div class="kpi-card period-card">
-        <small class="period-title">\${d.period}</small>
-        <strong class="period-type">\${typeLabel}</strong>
-        <div class="page-caption metric-row metric-achieved">محققة حسب مستهدف JHC: <b class="ok metric-value value-achieved">\${d.achJhc}</b></div>
-        <div class="page-caption metric-row metric-achieved">محققة حسب مستهدف HHC: <b class="ok metric-value value-achieved">\${d.achHhc}</b></div>
-        <div class="page-caption metric-row metric-cluster-failed">متعثر حسب مستهدف JHC: <b class="metric-value value-cluster-failed">\${d.failJhc}</b></div>
-        <div class="page-caption metric-row metric-company-failed">متعثر حسب مستهدف HHC: <b class="metric-value value-company-failed">\${d.failHhc}</b></div>
-        <div class="page-caption metric-row metric-noinput">لا يوجد إدخال: <b class="metric-value value-noinput">\${d.noinput}</b></div>
-        <div class="page-caption metric-row metric-ministry">تحديث وزاري: <b class="metric-value value-ministry">\${d.ministry}</b></div>
-        <div class="page-caption metric-row metric-cluster-rate">الاداء الاجمالي (JHC TARGET): <b class="metric-value value-cluster-rate">\${d.rateJhc}%</b></div>
-        <div class="page-caption metric-row metric-company-rate">الاداء الاجمالي (HHC TARGET): <b class="metric-value value-company-rate">\${d.rateHhc}%</b></div>
-      </div>\`;
-    }).join('');
-  }
-
-  // ── Render lux SVG chart ─────────────────────────────────────
-  function renderLuxChart(container, points, isForecast){
-    if(!container || !points.length) return;
-    
-    const W = 780, H = 350;
-    const pad = { l:60, r:20, t:38, b:72 };
-    const chartW = W - pad.l - pad.r;
-    const chartH = H - pad.t - pad.b;
-    
-    // Y axis: find range, ensure 50%-100% fits
-    const allRates = points.flatMap(p => [p.jhc, p.hhc]).filter(v => v > 0);
-    const minV = Math.max(0, Math.floor((Math.min(...allRates, 50) - 5) / 10) * 10);
-    const maxV = Math.ceil((Math.max(...allRates, 100) + 5) / 10) * 10;
-    
-    const yLevels = [];
-    for(let v = minV; v <= maxV; v += 10) yLevels.push(v);
-    
-    const yPos = (val) => pad.t + chartH - (val - minV) / (maxV - minV) * chartH;
-    
-    const n = points.length;
-    const xStep = n > 1 ? chartW / (n - 1) : 0;
-    const xPos = (i) => pad.l + i * xStep;
-    
-    const jhcPts = points.map((p,i) => `${xPos(i).toFixed(1)},${yPos(p.jhc).toFixed(1)}`).join(' ');
-    const hhcPts = points.map((p,i) => `${xPos(i).toFixed(1)},${yPos(p.hhc).toFixed(1)}`).join(' ');
-    
-    // Area under JHC line
-    const areaPath = points.map((p,i) => `${xPos(i).toFixed(1)} ${yPos(p.jhc).toFixed(1)}`).join(' L ');
-    const fullArea = `M${areaPath} L${xPos(n-1).toFixed(1)} ${(pad.t+chartH)} L${xPos(0).toFixed(1)} ${(pad.t+chartH)} Z`;
-    
-    const glowFilters = \`
-      <filter id="glowBlue2" x="-40%" y="-40%" width="180%" height="180%">
-        <feGaussianBlur result="blur" stdDeviation="4"/>
-        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>
-      <filter id="glowGold2" x="-40%" y="-40%" width="180%" height="180%">
-        <feGaussianBlur result="blur" stdDeviation="4"/>
-        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>
-      <linearGradient id="blueArea2" x1="0" x2="0" y1="0" y2="1">
-        <stop offset="0" stop-color="#60a5fa" stop-opacity=".20"/>
-        <stop offset="1" stop-color="#60a5fa" stop-opacity="0"/>
-      </linearGradient>\`;
-    
-    let gridLines = yLevels.map(v => {
-      const y = yPos(v).toFixed(1);
-      return \`<line class="grid" x1="\${pad.l}" x2="\${W-pad.r}" y1="\${y}" y2="\${y}"/>
-              <text class="y-label" x="25" y="\${(parseFloat(y)+4).toFixed(1)}">\${v}%</text>\`;
-    }).join('');
-    
-    const polyClass = isForecast ? 'cluster-poly forecast-poly' : 'cluster-poly';
-    const polyClass2 = isForecast ? 'company-poly forecast-poly' : 'company-poly';
-    const labelClass = isForecast ? 'forecast-label label' : 'label';
-    
-    let dots = points.map((p, i) => {
-      const x = xPos(i).toFixed(1);
-      const yJ = yPos(p.jhc).toFixed(1);
-      const yH = yPos(p.hhc).toFixed(1);
-      const lblY = 315;
-      
-      // Offset text to avoid overlap
-      const offset = (i % 2 === 0 && n > 4) ? -18 : 18;
-      const jTextY = (parseFloat(yJ) - 18).toFixed(1);
-      const hTextY = (parseFloat(yH) + 20).toFixed(1);
-      const jTextX = (n > 6 && i % 2 !== 0) ? (parseFloat(x) + 16).toFixed(1) : x;
-      const hTextX = (n > 6 && i % 2 !== 0) ? (parseFloat(x) - 16).toFixed(1) : x;
-
-      return \`<circle class="dot-blue" cx="\${x}" cy="\${yJ}" r="8" filter="url(#glowBlue2)"/>
-              <text class="value-blue" x="\${jTextX}" y="\${jTextY}">\${p.jhc}%</text>
-              <circle class="dot-gold" cx="\${x}" cy="\${yH}" r="8" filter="url(#glowGold2)"/>
-              <text class="value-gold" x="\${hTextX}" y="\${hTextY}">\${p.hhc}%</text>
-              <text class="\${labelClass}" x="\${x}" y="\${lblY}">\${p.period}</text>\`;
-    }).join('');
-    
-    const svg = \`<svg class="lux-chart" viewBox="0 0 \${W} \${H}" preserveAspectRatio="xMidYMid meet" role="img">
-      <defs>\${glowFilters}</defs>
-      \${gridLines}
-      <line class="axis" x1="\${pad.l}" x2="\${W-pad.r}" y1="\${pad.t+chartH}" y2="\${pad.t+chartH}"/>
-      <line class="axis" x1="\${pad.l}" x2="\${pad.l}" y1="\${pad.t}" y2="\${pad.t+chartH}"/>
-      <path d="\${fullArea}" fill="url(#blueArea2)" opacity=".78"/>
-      <polyline class="\${polyClass}" points="\${jhcPts}"/>
-      <polyline class="\${polyClass2}" points="\${hhcPts}"/>
-      <g text-anchor="middle">\${dots}</g>
-    </svg>\`;
-    
-    const wrap = container.querySelector('.lux-chart-wrap');
-    if(wrap) wrap.innerHTML = svg;
-  }
-
-  // ── Update performance chart (actual data) ───────────────────
-  function updateActualChart(summaryData){
-    const card = document.querySelector('#overview .executive-line-card:not(.forecast-line-card)');
-    if(!card || !summaryData.length) return;
-    const points = summaryData.map(d => ({ period: d.period, jhc: d.rateJhc, hhc: d.rateHhc }));
-    renderLuxChart(card, points, false);
-  }
-
-  // ── Update forecast chart ────────────────────────────────────
-  function updateForecastChart(forecastData){
-    const card = document.querySelector('#overview .forecast-line-card');
-    if(!card || !forecastData.length) return;
-    const points = forecastData.map(d => ({ period: d.period, jhc: d.jhc, hhc: d.hhc }));
-    renderLuxChart(card, points, true);
-  }
-
-  // ── Update filter period dropdown ────────────────────────────
-  function updatePeriodFilter(summaryData, forecastData){
-    const sel = document.getElementById('fltPeriod');
-    if(!sel) return;
-    // Keep "الكل" option, rebuild the rest
-    while(sel.options.length > 1) sel.remove(1);
-    const all = [...summaryData.map(d=>d.period), ...forecastData.map(d=>d.period)];
-    const unique = [...new Set(all)];
-    unique.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p; opt.textContent = p;
-      sel.appendChild(opt);
-    });
-  }
-
-  // ── Main hook: override handleFile to also run live updates ──
-  const origHandleFile = window._origHandleFileRegistered;
-  
-  // Store sheets data globally for the update engine
-  window._liveUpdateSheets = {};
-  
-  // We hook into the XLSX import event
-  document.addEventListener('DOMContentLoaded', function(){
-    const input = document.getElementById('excelImportInput');
-    if(!input) return;
-    
-    input.addEventListener('change', async function(e){
-      const file = e.target.files && e.target.files[0];
-      if(!file) return;
-      if(typeof XLSX === 'undefined') return;
-      
-      try {
-        const buf = await file.arrayBuffer();
-        const wb = XLSX.read(buf, {type:'array', cellDates:false});
-        
-        // Find monthly performance sheet
-        let summaryData = [], forecastData = [];
-        
-        wb.SheetNames.forEach(name => {
-          const n = String(name||'').trim();
-          const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], {header:1, defval:''});
-          
-          if(/الأداء الشهري|الأداء_الشهري|monthly/i.test(n)){
-            summaryData = parsePeriodSummary(rows);
-          }
-          if(/التحليل التنبؤي|التنبؤ|forecast/i.test(n)){
-            forecastData = parseForecast(rows);
-          }
-        });
-        
-        // Wait a tick for the main handler to finish updating tables
-        setTimeout(function(){
-          if(summaryData.length){
-            updatePeriodCards(summaryData);
-            updateActualChart(summaryData);
-            updatePeriodFilter(summaryData, forecastData);
-          }
-          if(forecastData.length){
-            updateForecastChart(forecastData);
-          }
-        }, 200);
-        
-      } catch(err){
-        console.error('Live update engine error:', err);
-      }
-    }, true); // use capture to run after original handler
-  });
-
-})();
-</script>
 </body></html>
