@@ -73,18 +73,18 @@
 <div class="filter-field"><label>الفترة</label><select id="fltPeriod"><option value="">الكل</option></select></div>
 <div class="filter-field"><label>المجال</label><select id="fltDomain"><option value="">الكل</option></select></div>
 <div class="filter-field"><label>الحالة</label><select id="fltStatus"><option value="">الكل</option><option>محقق</option><option>متعثر</option><option>متعثر حسب التجمع فقط</option><option>متعثر حسب الشركة فقط</option><option>متعثر حسب التجمع والشركة</option><option>بدون إدخال</option><option>تحديث وزاري</option><option>متفق</option><option>مختلف</option></select></div>
-<div class="filter-field"><label>نوع المؤشر</label><select id="fltFreq"><option value="">الكل</option><option>شهري</option><option>ربعي</option></select></div>
+<div class="filter-field"><label>نوع المؤشر</label><select id="fltFreq"><option value="">الكل</option><option>شهري</option><option>ربعي</option><option>نصف سنوي</option><option>سنوي</option></select></div>
 <div class="filter-actions"><button class="filter-btn" onclick="applyGlobalFilter()">تطبيق</button><button class="filter-btn secondary" onclick="resetGlobalFilter()">مسح</button></div>
 </div>
 <div class="filter-note">الفلاتر تعمل على الجداول التحليلية فقط، ولا تغيّر البيانات الأصلية.</div>
 </div>
 <section id="overview">
 <h1>الملخص التنفيذي</h1><details class="export-actions"><summary>تصدير ملف</summary><div class="export-menu-panel"><button onclick="exportSectionPDF('overview')" type="button">PDF</button></div></details>
-<p class="lead">يعرض هذا الملخص إجمالي المؤشرات، والمؤشرات الشهرية والربعية، مع احتساب الأداء الإجمالي حسب القاعدة المعتمدة: عدد المؤشرات المحققة ÷ إجمالي مؤشرات الفترة × 100. تم إدراج لا يوجد إدخال وتحديث وزاري ضمن البطاقات، وترتيب الربع الأول بعد مارس مباشرة.</p>
+<p class="lead">يعرض أعلى الصفحة تصنيف المؤشرات حسب خانة التكرار في ملف Excel فقط: إجمالي المؤشرات، الشهرية، الربعية، النصف سنوية، والسنوية. أي تصنيف غير موجود في خانة التكرار تظهر قيمته 0 حتى تتم إضافته في الملف.</p>
 <div class="cards overview-summary-cards" style="grid-template-columns:repeat(5,minmax(0,1fr))">
-<div class="kpi-card blue"><small>إجمالي المؤشرات</small><strong>115</strong></div>
+<div class="kpi-card blue"><small>إجمالي المؤشرات</small><strong>114</strong></div>
 <div class="kpi-card green"><small>المؤشرات الشهرية</small><strong>51</strong></div>
-<div class="kpi-card cyan"><small>المؤشرات الربعية</small><strong>64</strong></div>
+<div class="kpi-card cyan"><small>المؤشرات الربعية</small><strong>63</strong></div>
 <div class="kpi-card orange"><small>المؤشرات النصف سنوية</small><strong>0</strong></div>
 <div class="kpi-card purple"><small>المؤشرات السنوية</small><strong>0</strong></div>
 </div>
@@ -945,6 +945,70 @@ function downloadSectionExcel(sectionId){
   });
 })();
 </script>
+
+<script id="topFrequencyCardsPatch">
+(function(){
+  function clean(v){ return (v==null?'':String(v)).replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim(); }
+  function classifyFrequency(v){
+    const f=clean(v).toLowerCase();
+    if(!f) return '';
+    if(/نصف|النصف|semi|half/.test(f)) return 'semi';
+    if(/سنوي|سنة|annual|yearly|year/.test(f)) return 'annual';
+    if(/ربعي|ربع|quarter|quarterly/.test(f)) return 'quarterly';
+    if(/شهري|شهر|monthly|month/.test(f)) return 'monthly';
+    return 'other';
+  }
+  function ensureTopCardsOnly(){
+    const grid=document.querySelector('#overview .overview-summary-cards');
+    if(!grid) return;
+    grid.style.gridTemplateColumns='repeat(5,minmax(0,1fr))';
+    const labels=['إجمالي المؤشرات','المؤشرات الشهرية','المؤشرات الربعية','المؤشرات النصف سنوية','المؤشرات السنوية'];
+    const classes=['blue','green','cyan','orange','purple'];
+    const current=[...grid.querySelectorAll('.kpi-card strong')].map(x=>clean(x.textContent));
+    grid.innerHTML=labels.map((label,i)=>`<div class="kpi-card ${classes[i]}"><small>${label}</small><strong>${current[i]||'0'}</strong></div>`).join('');
+    const lead=document.querySelector('#overview > .lead');
+    if(lead){
+      lead.textContent='يعرض أعلى الصفحة تصنيف المؤشرات حسب خانة التكرار في ملف Excel فقط: إجمالي المؤشرات، الشهرية، الربعية، النصف سنوية، والسنوية. أي تصنيف غير موجود في خانة التكرار تظهر قيمته 0 حتى تتم إضافته في الملف.';
+    }
+  }
+  window.updateKpiTopCards=function(masterRows){
+    ensureTopCardsOnly();
+    const rows=Array.isArray(masterRows)?masterRows:[];
+    let hi=-1;
+    for(let i=0;i<Math.min(rows.length,15);i++){
+      const row=(rows[i]||[]).map(clean);
+      const joined=row.join(' | ');
+      if(/KPI\s*Code/i.test(joined) && (/KPI\s*Name/i.test(joined)||/اسم/.test(joined)) && (/التكرار|Frequency/i.test(joined))){ hi=i; break; }
+    }
+    if(hi<0) return;
+    const headers=(rows[hi]||[]).map(clean);
+    const codeIdx=headers.findIndex(h=>/KPI\s*Code|الكود|رمز/i.test(h));
+    const nameIdx=headers.findIndex(h=>/KPI\s*Name|اسم المؤشر|المؤشر/i.test(h));
+    const freqIdx=headers.findIndex(h=>/التكرار|Frequency/i.test(h));
+    const unique=new Map();
+    for(let i=hi+1;i<rows.length;i++){
+      const r=rows[i]||[];
+      const code=clean(codeIdx>=0?r[codeIdx]:'');
+      const name=clean(nameIdx>=0?r[nameIdx]:'');
+      const key=code || name;
+      if(!key) continue;
+      if(!unique.has(key)) unique.set(key, clean(freqIdx>=0?r[freqIdx]:''));
+    }
+    const counts={monthly:0, quarterly:0, semi:0, annual:0};
+    unique.forEach(freq=>{
+      const c=classifyFrequency(freq);
+      if(c==='monthly') counts.monthly++;
+      else if(c==='quarterly') counts.quarterly++;
+      else if(c==='semi') counts.semi++;
+      else if(c==='annual') counts.annual++;
+    });
+    const values=[unique.size, counts.monthly, counts.quarterly, counts.semi||0, counts.annual||0];
+    document.querySelectorAll('#overview .overview-summary-cards .kpi-card strong').forEach((el,i)=>{ el.textContent=String(values[i]??0); });
+  };
+  document.addEventListener('DOMContentLoaded', ensureTopCardsOnly);
+  ensureTopCardsOnly();
+})();
+</script>
 </body></html>';
  const blob=new Blob(['\ufeff'+html],{type:'application/vnd.ms-excel;charset=utf-8;'});
  const a=document.createElement('a');
@@ -1313,6 +1377,70 @@ document.addEventListener('click', function(e){
     if(hint) hint.textContent='اختر ملف منصة_الرؤية_2026_نهائي.xlsx وسيتم تحديث جميع البطاقات والجداول والشارتات مباشرة.';
     if(input) input.addEventListener('change',e=>directExcelUpdate(e.target.files&&e.target.files[0]));
   });
+})();
+</script>
+
+<script id="topFrequencyCardsPatch">
+(function(){
+  function clean(v){ return (v==null?'':String(v)).replace(/\u00a0/g,' ').replace(/\s+/g,' ').trim(); }
+  function classifyFrequency(v){
+    const f=clean(v).toLowerCase();
+    if(!f) return '';
+    if(/نصف|النصف|semi|half/.test(f)) return 'semi';
+    if(/سنوي|سنة|annual|yearly|year/.test(f)) return 'annual';
+    if(/ربعي|ربع|quarter|quarterly/.test(f)) return 'quarterly';
+    if(/شهري|شهر|monthly|month/.test(f)) return 'monthly';
+    return 'other';
+  }
+  function ensureTopCardsOnly(){
+    const grid=document.querySelector('#overview .overview-summary-cards');
+    if(!grid) return;
+    grid.style.gridTemplateColumns='repeat(5,minmax(0,1fr))';
+    const labels=['إجمالي المؤشرات','المؤشرات الشهرية','المؤشرات الربعية','المؤشرات النصف سنوية','المؤشرات السنوية'];
+    const classes=['blue','green','cyan','orange','purple'];
+    const current=[...grid.querySelectorAll('.kpi-card strong')].map(x=>clean(x.textContent));
+    grid.innerHTML=labels.map((label,i)=>`<div class="kpi-card ${classes[i]}"><small>${label}</small><strong>${current[i]||'0'}</strong></div>`).join('');
+    const lead=document.querySelector('#overview > .lead');
+    if(lead){
+      lead.textContent='يعرض أعلى الصفحة تصنيف المؤشرات حسب خانة التكرار في ملف Excel فقط: إجمالي المؤشرات، الشهرية، الربعية، النصف سنوية، والسنوية. أي تصنيف غير موجود في خانة التكرار تظهر قيمته 0 حتى تتم إضافته في الملف.';
+    }
+  }
+  window.updateKpiTopCards=function(masterRows){
+    ensureTopCardsOnly();
+    const rows=Array.isArray(masterRows)?masterRows:[];
+    let hi=-1;
+    for(let i=0;i<Math.min(rows.length,15);i++){
+      const row=(rows[i]||[]).map(clean);
+      const joined=row.join(' | ');
+      if(/KPI\s*Code/i.test(joined) && (/KPI\s*Name/i.test(joined)||/اسم/.test(joined)) && (/التكرار|Frequency/i.test(joined))){ hi=i; break; }
+    }
+    if(hi<0) return;
+    const headers=(rows[hi]||[]).map(clean);
+    const codeIdx=headers.findIndex(h=>/KPI\s*Code|الكود|رمز/i.test(h));
+    const nameIdx=headers.findIndex(h=>/KPI\s*Name|اسم المؤشر|المؤشر/i.test(h));
+    const freqIdx=headers.findIndex(h=>/التكرار|Frequency/i.test(h));
+    const unique=new Map();
+    for(let i=hi+1;i<rows.length;i++){
+      const r=rows[i]||[];
+      const code=clean(codeIdx>=0?r[codeIdx]:'');
+      const name=clean(nameIdx>=0?r[nameIdx]:'');
+      const key=code || name;
+      if(!key) continue;
+      if(!unique.has(key)) unique.set(key, clean(freqIdx>=0?r[freqIdx]:''));
+    }
+    const counts={monthly:0, quarterly:0, semi:0, annual:0};
+    unique.forEach(freq=>{
+      const c=classifyFrequency(freq);
+      if(c==='monthly') counts.monthly++;
+      else if(c==='quarterly') counts.quarterly++;
+      else if(c==='semi') counts.semi++;
+      else if(c==='annual') counts.annual++;
+    });
+    const values=[unique.size, counts.monthly, counts.quarterly, counts.semi||0, counts.annual||0];
+    document.querySelectorAll('#overview .overview-summary-cards .kpi-card strong').forEach((el,i)=>{ el.textContent=String(values[i]??0); });
+  };
+  document.addEventListener('DOMContentLoaded', ensureTopCardsOnly);
+  ensureTopCardsOnly();
 })();
 </script>
 </body></html>
