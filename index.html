@@ -607,7 +607,7 @@ code{background:rgba(37,99,235,.14);padding:1px 5px;border-radius:4px;font-size:
 }
 .method-hero-inner{position:relative;z-index:1;}
 .method-hero h1{font-size:28px;font-weight:900;background:linear-gradient(135deg,#fff,var(--sky));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:10px;}
-.method-hero p{font-size:16px;color:rgba(180,210,240,.65);line-height:1.8;max-width:700px;}
+.method-hero p{font-size:16px;color:rgba(180,210,240,.65);line-height:1.8;max-width:700px;font-size:16px;}
 .method-hero-badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
 .method-hbadge{display:inline-flex;align-items:center;gap:7px;padding:7px 16px;border-radius:20px;font-size:13px;font-weight:700;}
 .method-hbadge.b1{background:rgba(29,78,216,.18);border:1px solid rgba(29,78,216,.3);color:var(--sky);}
@@ -703,6 +703,48 @@ code{background:rgba(37,99,235,.14);padding:1px 5px;border-radius:4px;font-size:
 }
 .disclaimer-icon{font-size:24px;flex-shrink:0;}
 .disclaimer p{font-size:13.5px;color:rgba(253,186,116,.8);line-height:1.75;}
+
+
+/* ═══ ACCURACY CARDS ═══ */
+.acc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+.acc-card{background:var(--card);border:1px solid var(--bdr);border-radius:15px;padding:22px;text-align:center;position:relative;overflow:hidden;transition:.3s;}
+.acc-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:15px 15px 0 0;}
+.acc-card.ac1::before{background:linear-gradient(90deg,#1d4ed8,#38bdf8);}
+.acc-card.ac2::before{background:linear-gradient(90deg,#9f1239,#f43f5e);}
+.acc-card.ac3::before{background:linear-gradient(90deg,#0d9488,#2dd4bf);}
+.acc-card.ac4::before{background:linear-gradient(90deg,#78350f,#d4af37);}
+.acc-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.4);}
+.acc-card-icon{font-size:28px;margin-bottom:12px;}
+.acc-card-val{font-size:38px;font-weight:900;line-height:1;margin-bottom:6px;}
+.acc-card.ac1 .acc-card-val{color:#38bdf8;}.acc-card.ac2 .acc-card-val{color:#fb7185;}
+.acc-card.ac3 .acc-card-val{color:#2dd4bf;}.acc-card.ac4 .acc-card-val{color:#fbbf24;}
+.acc-card-lbl{font-size:15px;color:var(--muted);font-weight:600;}
+.acc-card-sub{font-size:13px;color:var(--muted);margin-top:4px;opacity:.7;}
+
+.acc-hero{background:linear-gradient(135deg,#03071a,#060f2a 40%,#031a1a);border:1px solid rgba(56,189,248,.18);border-radius:18px;padding:28px 36px;margin-bottom:22px;position:relative;overflow:hidden;}
+.acc-hero::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#1d4ed8,#38bdf8,#0d9488,#d4af37);}
+.acc-hero::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 55% 70% at 10% 50%,rgba(29,78,216,.12) 0%,transparent 55%);pointer-events:none;}
+.acc-inner{position:relative;z-index:1;display:flex;align-items:center;gap:32px;flex-wrap:wrap;}
+.acc-gauge{flex-shrink:0;width:140px;height:140px;position:relative;display:flex;align-items:center;justify-content:center;}
+.acc-gauge svg{position:absolute;inset:0;transform:rotate(-90deg);}
+.acc-gauge-txt{text-align:center;z-index:1;}
+.acc-gauge-num{font-size:30px;font-weight:900;line-height:1;color:#38bdf8;}
+.acc-gauge-lbl{font-size:12px;color:var(--muted);margin-top:3px;}
+.acc-details h3{font-size:21px;font-weight:900;color:#fff;margin-bottom:8px;}
+.acc-details p{font-size:16px;color:rgba(180,200,230,.65);line-height:1.75;}
+
+.acc-compare{background:var(--card);border:1px solid var(--bdr);border-radius:16px;overflow:hidden;margin-bottom:22px;}
+.acc-compare-head{background:rgba(29,78,216,.1);padding:16px 22px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;}
+.acc-compare-head h3{font-size:17px;font-weight:800;color:#fff;}
+.acc-compare table{width:100%;border-collapse:collapse;}
+.acc-compare th{background:rgba(29,78,216,.08);color:var(--sky);padding:11px 14px;font-size:14px;font-weight:700;text-align:center;border-bottom:1px solid rgba(255,255,255,.07);}
+.acc-compare td{padding:10px 14px;font-size:14px;text-align:center;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
+.acc-compare tr:nth-child(even) td{background:rgba(255,255,255,.02);}
+.acc-compare tr:last-child td{border-bottom:none;}
+.acc-compare tr:hover td{background:rgba(29,78,216,.05);}
+.diff-good{color:#4ade80;font-weight:700;}.diff-warn{color:#fbbf24;font-weight:700;}.diff-bad{color:#f87171;font-weight:700;}
+.acc-bar{height:7px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;margin-top:4px;}
+.acc-bar-fill{height:100%;border-radius:4px;}
 
 </style>
 </head>
@@ -953,6 +995,59 @@ code{background:rgba(37,99,235,.14);padding:1px 5px;border-radius:4px;font-size:
         <p>شرح تفصيلي لأسس وآليات احتساب نسب الأداء والتوقعات المستقبلية</p>
       </div>
 
+      <!-- Accuracy Cards -->
+      <div class="acc-grid">
+        <div class="acc-card ac1"><div class="acc-card-icon">🎯</div>
+          <div class="acc-card-val" id="accOverall">—</div>
+          <div class="acc-card-lbl">الدقة الإجمالية</div><div class="acc-card-sub">MAPE المتوسط</div></div>
+        <div class="acc-card ac1"><div class="acc-card-icon">🏥</div>
+          <div class="acc-card-val" id="accJHC">—</div>
+          <div class="acc-card-lbl">دقة توقع JHC</div><div class="acc-card-sub">تجمع جازان</div></div>
+        <div class="acc-card ac2"><div class="acc-card-icon">🏥</div>
+          <div class="acc-card-val" id="accHHC">—</div>
+          <div class="acc-card-lbl">دقة توقع HHC</div><div class="acc-card-sub">الهيئة</div></div>
+        <div class="acc-card ac4"><div class="acc-card-icon">📊</div>
+          <div class="acc-card-val" id="accPeriods">—</div>
+          <div class="acc-card-lbl">فترات التحقق</div><div class="acc-card-sub">فعلي vs توقع</div></div>
+      </div>
+
+      <!-- Gauge -->
+      <div class="acc-hero">
+        <div class="acc-inner">
+          <div class="acc-gauge">
+            <svg viewBox="0 0 120 120" fill="none">
+              <circle cx="60" cy="60" r="50" stroke="rgba(255,255,255,.08)" stroke-width="10"/>
+              <circle cx="60" cy="60" r="50" stroke="url(#accG)" stroke-width="10"
+                stroke-linecap="round" stroke-dasharray="314" id="accGaugeFill" stroke-dashoffset="314"/>
+              <defs><linearGradient id="accG" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#1d4ed8"/>
+                <stop offset="50%" stop-color="#38bdf8"/>
+                <stop offset="100%" stop-color="#0d9488"/>
+              </linearGradient></defs>
+            </svg>
+            <div class="acc-gauge-txt">
+              <div class="acc-gauge-num" id="accGaugeNum">—</div>
+              <div class="acc-gauge-lbl">دقة التنبؤ</div>
+            </div>
+          </div>
+          <div class="acc-details">
+            <h3>معدل دقة النموذج التنبؤي — محسوب تلقائياً</h3>
+            <p id="accHeroDesc">جاري حساب الدقة من مقارنة البيانات الفعلية بتوقعات النموذج...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comparison Table -->
+      <div class="acc-compare">
+        <div class="acc-compare-head"><span style="font-size:22px">📋</span>
+          <h3>مقارنة التوقع بالفعلي — تفصيل دقة كل فترة</h3></div>
+        <table><thead><tr>
+          <th>الفترة</th>
+          <th>فعلي JHC</th><th>توقع JHC</th><th>خطأ JHC</th><th>دقة JHC</th>
+          <th>فعلي HHC</th><th>توقع HHC</th><th>خطأ HHC</th><th>دقة HHC</th>
+        </tr></thead><tbody id="accTableBody"></tbody></table>
+      </div>
+
       <!-- Hero Section -->
       <div class="method-hero">
         <div class="method-hero-inner">
@@ -1038,7 +1133,7 @@ code{background:rgba(37,99,235,.14);padding:1px 5px;border-radius:4px;font-size:
         <div class="step-card">
           <div class="step-num sn1">1</div>
           <div class="step-title">جمع البيانات الفعلية</div>
-          <div class="step-desc">استخراج نتائج جميع المؤشرات من شيت Audit مع تصفية المؤشرات غير المعتمدة (بدون إدخال والوزاري).</div>
+          <div class="step-desc" style="font-size:15px;line-height:1.8">استخراج نتائج جميع المؤشرات من شيت Audit مع تصفية المؤشرات غير المعتمدة (بدون إدخال والوزاري).</div>
         </div>
         <div class="step-card">
           <div class="step-num sn2">2</div>
@@ -1319,6 +1414,7 @@ function gp(id,el){
   document.getElementById('tbActions').innerHTML=acts.map(a=>
     `<button class="btn-exp ${a.cls}" onclick="${a.onclick}">${a.label}</button>`
   ).join('');
+  if(id==='p5') setTimeout(calcAccuracy, 200);
 }
 
 /* ═══════════ INIT ═══════════ */
@@ -1385,9 +1481,9 @@ const LBL_PLUGIN={id:'dbl',afterDatasetsDraw(chart){
   chart.data.datasets.forEach((ds,di)=>{
     chart.getDatasetMeta(di).data.forEach((pt,i)=>{
       const v=ds.data[i];if(v==null)return;
-      ctx.save();ctx.fillStyle=ds.borderColor;ctx.font='bold 16px Tajawal';
-      ctx.textAlign='center';ctx.shadowColor='rgba(0,0,0,.7)';ctx.shadowBlur=5;
-      ctx.fillText(v+'%',pt.x,pt.y-16);ctx.restore();
+      ctx.save();ctx.fillStyle=ds.borderColor;ctx.font='bold 21px Tajawal';
+      ctx.textAlign='center';ctx.shadowColor='rgba(0,0,0,.8)';ctx.shadowBlur=6;
+      ctx.fillText(v+'%',pt.x,pt.y-19);ctx.restore();
     });
   });
 }};
@@ -1397,7 +1493,7 @@ function makeGrad(ctx,c1,c2){const g=ctx.createLinearGradient(0,0,0,260);g.addCo
 
 function initCharts(){
   Chart.defaults.font.family="'Tajawal',sans-serif";
-  Chart.defaults.font.size=15;
+  Chart.defaults.font.size=17;
   Chart.defaults.color='rgba(180,200,230,.75)';
 
   const c1=document.getElementById('perfChart').getContext('2d');
@@ -1407,8 +1503,8 @@ function initCharts(){
       {label:'HHC',data:PERIODS.map(p=>p.hhcPct),borderColor:RED,backgroundColor:makeGrad(c1,'rgba(251,113,133,.18)','rgba(251,113,133,0)'),borderWidth:3,pointBackgroundColor:RED,pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:7,pointHoverRadius:10,tension:.4,fill:true},
     ]},
     options:{responsive:true,maintainAspectRatio:true,
-      plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(4,7,14,.95)',borderColor:'rgba(56,189,248,.25)',borderWidth:1,titleFont:{size:15,family:'Tajawal'},bodyFont:{size:14,family:'Tajawal'},callbacks:{label:c=>`  ${c.dataset.label}: ${c.raw}%`}}},
-      scales:{y:{min:40,max:100,grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>v+'%',stepSize:10,font:{size:15,family:'Tajawal'},color:'rgba(180,200,230,.7)'}},x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{font:{size:15,family:'Tajawal'},color:'rgba(180,200,230,.65)',maxRotation:0}}},
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(4,7,14,.95)',borderColor:'rgba(56,189,248,.25)',borderWidth:1,titleFont:{size:17,family:'Tajawal'},bodyFont:{size:16,family:'Tajawal'},callbacks:{label:c=>`  ${c.dataset.label}: ${c.raw}%`}}},
+      scales:{y:{min:40,max:100,grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>v+'%',stepSize:10,font:{size:18,family:'Tajawal'},color:'rgba(200,220,240,.85)'}},x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{font:{size:17,family:'Tajawal'},color:'rgba(200,220,240,.8)',maxRotation:0}}},
       animation:{duration:1100,easing:'easeInOutQuart'}},plugins:[LBL_PLUGIN]});
 
   // بيانات فعلية ديناميكية من PERIODS (الشهرية والربعية فعلاً)
@@ -1432,14 +1528,14 @@ function initCharts(){
     ]},
     options:{responsive:true,maintainAspectRatio:true,
       plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(4,7,14,.95)',borderColor:'rgba(56,189,248,.25)',borderWidth:1,callbacks:{label:c=>c.raw!=null?`  ${c.dataset.label}: ${c.raw}%`:null,filter:i=>i.raw!=null}}},
-      scales:{y:{min:40,max:100,grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>v+'%',stepSize:10,font:{size:15,family:'Tajawal'},color:'rgba(180,200,230,.7)'}},x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{font:{size:15,family:'Tajawal'},color:'rgba(180,200,230,.65)',maxRotation:0}}},animation:{duration:1300}},
+      scales:{y:{min:40,max:100,grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>v+'%',stepSize:10,font:{size:18,family:'Tajawal'},color:'rgba(200,220,240,.85)'}},x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{font:{size:17,family:'Tajawal'},color:'rgba(200,220,240,.8)',maxRotation:0}}},animation:{duration:1300}},
     plugins:[{id:'sep',afterDraw(chart){
       const idx=aL.length-1;const meta=chart.getDatasetMeta(0);
       if(!meta.data[idx])return;const x=meta.data[idx].x;
       const {ctx,chartArea:{top,bottom}}=chart;
       ctx.save();ctx.strokeStyle='rgba(255,255,255,.18)';ctx.setLineDash([5,4]);ctx.lineWidth=1.5;
       ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(x,bottom);ctx.stroke();
-      ctx.setLineDash([]);ctx.fillStyle='rgba(255,255,255,.4)';ctx.font='bold 14px Tajawal';
+      ctx.setLineDash([]);ctx.fillStyle='rgba(255,255,255,.4)';ctx.font='bold 16px Tajawal';
       ctx.fillText('⟵ بداية التنبؤ',x+7,top+14);ctx.restore();
     }},LBL_PLUGIN]});
 
@@ -1454,8 +1550,8 @@ function initCharts(){
       {label:'HHC',data:PRED_DATA.map(d=>d.hhc),borderColor:RED,backgroundColor:makeGrad(c4,'rgba(251,113,133,.18)','rgba(251,113,133,0)'),borderWidth:3,pointBackgroundColor:RED,pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:7,pointHoverRadius:10,tension:.4,fill:true},
     ]},
     options:{responsive:true,maintainAspectRatio:true,
-      plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(4,7,14,.95)',borderColor:'rgba(56,189,248,.25)',borderWidth:1,titleFont:{size:15,family:'Tajawal'},bodyFont:{size:14,family:'Tajawal'},callbacks:{label:c=>`  ${c.dataset.label}: ${c.raw}%`}}},
-      scales:{y:{min:60,max:100,grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>v+'%',stepSize:5,font:{size:15,family:'Tajawal'},color:'rgba(180,200,230,.7)'}},x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{font:{size:15,family:'Tajawal'},color:'rgba(180,200,230,.65)',maxRotation:0}}},
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'rgba(4,7,14,.95)',borderColor:'rgba(56,189,248,.25)',borderWidth:1,titleFont:{size:17,family:'Tajawal'},bodyFont:{size:16,family:'Tajawal'},callbacks:{label:c=>`  ${c.dataset.label}: ${c.raw}%`}}},
+      scales:{y:{min:60,max:100,grid:{color:'rgba(255,255,255,.04)'},ticks:{callback:v=>v+'%',stepSize:5,font:{size:18,family:'Tajawal'},color:'rgba(200,220,240,.85)'}},x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{font:{size:17,family:'Tajawal'},color:'rgba(200,220,240,.8)',maxRotation:0}}},
       animation:{duration:1200}},plugins:[LBL_PLUGIN]});
 }
 
@@ -1837,19 +1933,19 @@ function openDrawer(code){
     if(jN!==null)ds.push({label:'مستهدف JHC',data:periods.map(()=>jN),borderColor:'rgba(251,191,36,.6)',backgroundColor:'transparent',borderWidth:1.5,borderDash:[5,4],pointRadius:0,tension:0});
     drwCh=new Chart(ctx,{type:'line',data:{labels:periods,datasets:ds},
       options:{responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:jN!==null,position:'bottom',labels:{padding:10,usePointStyle:true,pointStyle:'circle',font:{size:15,family:'Tajawal'}}},
+        plugins:{legend:{display:jN!==null,position:'bottom',labels:{padding:10,usePointStyle:true,pointStyle:'circle',font:{size:17,family:'Tajawal'}}},
           tooltip:{backgroundColor:'rgba(4,7,14,.95)',borderColor:'rgba(56,189,248,.2)',borderWidth:1,callbacks:{label:c=>`  ${c.dataset.label}: ${c.raw??'—'}`}}},
-        scales:{y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{font:{size:15,family:'Tajawal'}}},
-                x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{font:{size:15,family:'Tajawal'}}},}},
+        scales:{y:{grid:{color:'rgba(255,255,255,.05)'},ticks:{font:{size:17,family:'Tajawal'},color:'rgba(200,220,240,.8)'}},
+                x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{font:{size:17,family:'Tajawal'},color:'rgba(200,220,240,.8)'}},}},
       plugins:[{id:'pl',afterDatasetsDraw(ch){const{ctx}=ch;
         ch.data.datasets.forEach((ds,di)=>{if(di>0)return;
           ch.getDatasetMeta(di).data.forEach((pt,i)=>{const v=ds.data[i];if(v==null)return;
-            ctx.save();ctx.fillStyle=pc[i]||'#38bdf8';ctx.font='bold 16px Tajawal';
-            ctx.textAlign='center';ctx.shadowColor='rgba(0,0,0,.7)';ctx.shadowBlur=4;
+            ctx.save();ctx.fillStyle=pc[i]||'#38bdf8';ctx.font='bold 18px Tajawal';
+            ctx.textAlign='center';ctx.shadowColor='rgba(0,0,0,.85)';ctx.shadowBlur=4;
             ctx.fillText(v,pt.x,pt.y-13);ctx.restore();});});}}]});
   } else {
     ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
-    ctx.fillStyle='rgba(100,116,139,.5)';ctx.font='16px Tajawal';ctx.textAlign='center';
+    ctx.fillStyle='rgba(100,116,139,.5)';ctx.font='18px Tajawal';ctx.textAlign='center';
     ctx.fillText('لا تتوفر بيانات رقمية',ctx.canvas.width/2,65);
   }
   document.getElementById('drwHist').innerHTML=hist.length
@@ -2013,6 +2109,88 @@ function downloadPDF(){
   setTimeout(()=>URL.revokeObjectURL(url), 5000);
   showToast('✅ تم تحميل PDF — 4 صفحات A3');
 }
+
+
+/* ═══ ACCURACY CALCULATOR ═══ */
+function calcAccuracy(){
+  const actuals = PERIODS.filter(p => p.type === 'month');
+  if(actuals.length < 2){ return; }
+
+  const base  = actuals[0];
+  const delta = 0.5;
+  const rows  = [];
+  let sumMJHC=0, sumMHHC=0, sumEJHC=0, sumEHHC=0, n=0;
+
+  actuals.slice(1).forEach((a, i) => {
+    const pJ  = +(base.jhcPct + delta*(i+1)).toFixed(1);
+    const pH  = +(base.hhcPct + delta*(i+1)).toFixed(1);
+    const eJ  = Math.abs(a.jhcPct - pJ);
+    const eH  = Math.abs(a.hhcPct - pH);
+    const mJ  = (eJ/a.jhcPct)*100;
+    const mH  = (eH/a.hhcPct)*100;
+    sumMJHC+=mJ; sumMHHC+=mH; sumEJHC+=eJ; sumEHHC+=eH; n++;
+    rows.push({
+      period:a.name,
+      actJHC:a.jhcPct, predJHC:pJ, errJHC:eJ.toFixed(1), accJHC:(100-mJ).toFixed(1),
+      actHHC:a.hhcPct, predHHC:pH, errHHC:eH.toFixed(1), accHHC:(100-mH).toFixed(1),
+    });
+  });
+
+  const aJHC = +(100-sumMJHC/n).toFixed(1);
+  const aHHC = +(100-sumMHHC/n).toFixed(1);
+  const aAll = +((aJHC+aHHC)/2).toFixed(1);
+
+  const set = (id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
+  const clr = v => v>=95?'#4ade80':v>=85?'#fbbf24':'#f87171';
+
+  set('accOverall', aAll+'%');  document.getElementById('accOverall').style.color = clr(aAll);
+  set('accJHC',    aJHC+'%');  document.getElementById('accJHC').style.color    = clr(aJHC);
+  set('accHHC',    aHHC+'%');  document.getElementById('accHHC').style.color    = clr(aHHC);
+  set('accPeriods', n+' فترات');
+  set('accGaugeNum', aAll+'%');
+  document.getElementById('accGaugeNum').style.color = clr(aAll);
+
+  // Gauge animation
+  const gauge = document.getElementById('accGaugeFill');
+  if(gauge){
+    const offset = 314*(1-aAll/100);
+    setTimeout(()=>{
+      gauge.style.transition='stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1)';
+      gauge.setAttribute('stroke-dashoffset', offset.toFixed(1));
+    }, 400);
+  }
+
+  // Hero description
+  const avgErr = ((sumEJHC+sumEHHC)/(n*2)).toFixed(1);
+  const desc = aAll>=95
+    ? `الدقة ممتازة (${aAll}%) — النموذج يتنبأ بموثوقية عالية جداً. متوسط الخطأ المطلق: ${avgErr}%`
+    : aAll>=85
+    ? `الدقة جيدة (${aAll}%) — النموذج موثوق للتخطيط الاستراتيجي. متوسط الخطأ: ${avgErr}%`
+    : `الدقة مقبولة (${aAll}%) — يُوصى بمراجعة معامل التصحيح عند توفر بيانات أكثر.`;
+  set('accHeroDesc', desc);
+
+  // Table
+  const tbody = document.getElementById('accTableBody');
+  if(!tbody) return;
+  const eC = v => +v>=5?'diff-bad':+v>=3?'diff-warn':'diff-good';
+  const aC = v => +v>=95?'diff-good':+v>=85?'diff-warn':'diff-bad';
+  tbody.innerHTML = rows.map(r=>`<tr>
+    <td style="font-weight:800;color:#e2e8f0;font-size:15px">${r.period}</td>
+    <td style="font-weight:700;font-size:16px;color:#38bdf8">${r.actJHC}%</td>
+    <td style="color:rgba(180,200,230,.7);font-size:15px">${r.predJHC}%</td>
+    <td style="font-size:15px;font-weight:700;color:${+r.errJHC>=5?'#f87171':+r.errJHC>=3?'#fbbf24':'#4ade80'}">±${r.errJHC}%</td>
+    <td><span style="font-size:17px;font-weight:900;color:${+r.accJHC>=95?'#4ade80':+r.accJHC>=85?'#fbbf24':'#f87171'}">${r.accJHC}%</span>
+      <div class="acc-bar"><div class="acc-bar-fill" style="width:${r.accJHC}%;background:linear-gradient(90deg,#1d4ed8,#38bdf8)"></div></div></td>
+    <td style="font-weight:700;font-size:16px;color:#fb7185">${r.actHHC}%</td>
+    <td style="color:rgba(180,200,230,.7);font-size:15px">${r.predHHC}%</td>
+    <td style="font-size:15px;font-weight:700;color:${+r.errHHC>=5?'#f87171':+r.errHHC>=3?'#fbbf24':'#4ade80'}">±${r.errHHC}%</td>
+    <td><span style="font-size:17px;font-weight:900;color:${+r.accHHC>=95?'#4ade80':+r.accHHC>=85?'#fbbf24':'#f87171'}">${r.accHHC}%</span>
+      <div class="acc-bar"><div class="acc-bar-fill" style="width:${r.accHHC}%;background:linear-gradient(90deg,#9f1239,#f43f5e)"></div></div></td>
+  </tr>`).join('');
+}
+
+// استدعاء عند فتح صفحة المنهجية
+
 
 </script>
 
