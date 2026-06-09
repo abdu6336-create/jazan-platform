@@ -1266,6 +1266,7 @@ code{background:rgba(37,99,235,.14);padding:1px 5px;border-radius:4px;font-size:
             <th>مستهدف HHC</th>
             <th>حالة JHC</th>
             <th>حالة HHC</th>
+            <th>فجوة HHC (مستهدف − قيمة)</th>
             <th>بدون إدخال</th>
           </tr></thead>
           <tbody id="auditTbody"></tbody>
@@ -2228,6 +2229,16 @@ function renderAudit(){
       <td style="color:var(--muted);font-size:12px">${r.hhcT}</td>
       <td><span class="b ${sB(r.jhcS)}" style="font-size:12px">${r.jhcS}</span></td>
       <td><span class="b ${sB(r.hhcS)}" style="font-size:12px">${r.hhcS}</span></td>
+
+      <td style="text-align:center;font-weight:700;font-size:13px">${(()=>{
+        const v=parseFloat(String(r.val).replace(/[%,\s]/g,''));
+        const t=parseFloat(String(r.hhcT).replace(/[%,<>≤≥\s]/g,''));
+        if(isNaN(v)||isNaN(t)) return '<span style="color:var(--muted)">—</span>';
+        const gap=+(t-v).toFixed(3);
+        const clr=gap<=0?'#4ade80':gap<=5?'#fbbf24':'#f87171';
+        const sign=gap>0?'▲ ':gap<0?'▼ ':'';
+        return '<span style="color:'+clr+'">'+sign+Math.abs(gap)+'</span>';
+      })()}</td>
       <td style="text-align:center;color:${r.noInput==='نعم'?'#f87171':'var(--muted)'}">
         ${r.noInput==='نعم'?'⚠️ نعم':'—'}
       </td>
